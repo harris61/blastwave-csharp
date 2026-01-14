@@ -364,3 +364,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Keep published app output for distribution
+!bin/
+bin/*
+!bin/publish/
+!bin/publish/**
