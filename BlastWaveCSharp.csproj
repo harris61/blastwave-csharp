@@ -12,11 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="sound_w5C_icon.ico" />
     <Content Include="sound__3__zx3_icon.ico" />
-    <Content Include="tespng.ico" />
-    <Content Include="wave_OIG_icon.ico" />
-    <Content Include="wavvve.ico" />
   </ItemGroup>
 
   <ItemGroup>
