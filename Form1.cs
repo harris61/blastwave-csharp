@@ -7,10 +7,12 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 
-namespace WindowsFormsApp3
+namespace BlastWaveCSharp
 {
     public partial class Form1 : Form
     {
+        private const int DefaultSps = 1024;
+
         public Form1()
         {
             InitializeComponent();
@@ -19,645 +21,636 @@ namespace WindowsFormsApp3
 
         private void Button1_Click(object sender, EventArgs e)
         {
-            int jumlahFileWave = Int32.Parse(textBox1.Text);
-            //int jumlahFileWave = 6;
-            int lamaPengukuran = Int32.Parse(textBox7.Text);
-            string mainFolder = "\\Blasting Data";
-            string defaultDir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + mainFolder;
-            Console.WriteLine(defaultDir);
-            DirectoryInfo dirWave = new DirectoryInfo($@"{defaultDir}\Signature Wave\");
-            FileInfo[] filesWave = dirWave.GetFiles("*.txt");
-            int[] namaFileIntWave = new int[jumlahFileWave];
-            string[] namaFileStringWave = new string[jumlahFileWave];
-            for (int a=0; a<jumlahFileWave; a++)
-            {
-                int valueWave = 0;
-                int posWave = filesWave[a].Name.IndexOf(".");
-                namaFileStringWave[a] = filesWave[a].Name;
-                string cutNameWave = namaFileStringWave[a].Remove(posWave);
-                Int32.TryParse(cutNameWave, out valueWave);
-                namaFileIntWave[a] = valueWave;
-            }
-            Array.Sort(namaFileIntWave);
+            button1.Enabled = false;
+            var previousCursor = System.Windows.Forms.Cursor.Current;
+            System.Windows.Forms.Cursor.Current = Cursors.WaitCursor;
 
-            for (int b=0; b<jumlahFileWave; b++)
+            try
             {
-                namaFileStringWave[b] = namaFileIntWave[b].ToString();
+                if (!TryGetInputs(out InputParams inputs))
+                {
+                    return;
+                }
+
+                string defaultDir = GetDefaultDir();
+                if (!Directory.Exists(defaultDir))
+                {
+                    ShowError($"Folder not found: {defaultDir}");
+                    return;
+                }
+
+                if (inputs.SamplingRate % DefaultSps != 0)
+                {
+                    ShowError($"Sampling rate must be divisible by {DefaultSps}.");
+                    return;
+                }
+
+                int ratioSps = inputs.SamplingRate / DefaultSps;
+                SignatureWaveData signature = LoadSignatureWave(defaultDir, inputs.SignatureFileCount, inputs.MeasurementMs, ratioSps);
+                DelayScenarioData delays = LoadDelayScenarios(defaultDir, inputs.DelayFileCount, ratioSps);
+                WeightData weights = LoadWeights(defaultDir, inputs.DelayFileCount);
+                DistanceData distances = LoadDistanceData(defaultDir, inputs.DelayFileCount);
+
+                ValidateScenarioAlignment(delays, weights, distances);
+
+                ComputationResult result = ComputeScenarioWaves(
+                    signature,
+                    delays,
+                    weights,
+                    distances,
+                    inputs.FieldConstant,
+                    inputs.SignatureWeight);
+
+                UpdateUi(signature, result, inputs.SamplingRate);
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Failed to calculate PPV.{Environment.NewLine}{ex.Message}");
+            }
+            finally
+            {
+                System.Windows.Forms.Cursor.Current = previousCursor;
+                button1.Enabled = true;
+            }
+        }
+
+        private static string GetDefaultDir()
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Blasting Data");
+        }
+
+        private bool TryGetInputs(out InputParams inputs)
+        {
+            inputs = new InputParams();
+
+            if (!int.TryParse(textBox1.Text, out int signatureFiles) || signatureFiles <= 0)
+            {
+                ShowError("Jumlah File Signature Wave harus angka > 0.");
+                return false;
             }
 
-            List<string[]> dataListWave = new List<string[]>();
-            int panjangLine = 36654;
-            string[] assignDataWave = new string[panjangLine];
-            for (int c=0; c<jumlahFileWave; c++)
+            if (!int.TryParse(textBox2.Text, out int delayFiles) || delayFiles <= 0)
             {
-                //assignDataWave = System.IO.File.ReadAllLines($@"C:\Users\user\Desktop\Signature Wave\{namaFileStringWave[c]}.txt");
-                assignDataWave = System.IO.File.ReadAllLines($@"{defaultDir}\Signature Wave\{namaFileStringWave[c]}.txt");
-                dataListWave.Add(assignDataWave);
+                ShowError("Jumlah File Skenario Delay harus angka > 0.");
+                return false;
             }
 
-            int defaultsps = 1024;
-            //int sps = 4096;
-            int sps = Int32.Parse(textBox5.Text);
-            int rasiosps = sps / defaultsps;
-            int startWave = 270*rasiosps;
-            int endWave = lamaPengukuran*rasiosps;
-            Console.WriteLine(endWave);
+            if (!double.TryParse(textBox3.Text, out double fieldConstant) || fieldConstant <= 0)
+            {
+                ShowError("Konstanta Lapangan harus angka > 0.");
+                return false;
+            }
+
+            if (!double.TryParse(textBox4.Text, out double signatureWeight) || signatureWeight <= 0)
+            {
+                ShowError("Muatan Signature Hole harus angka > 0.");
+                return false;
+            }
+
+            if (!int.TryParse(textBox5.Text, out int samplingRate) || samplingRate <= 0)
+            {
+                ShowError("Sampling Rate harus angka > 0.");
+                return false;
+            }
+
+            if (!int.TryParse(textBox7.Text, out int measurementMs) || measurementMs <= 0)
+            {
+                ShowError("Lama Pengukuran harus angka > 0.");
+                return false;
+            }
+
+            inputs.SignatureFileCount = signatureFiles;
+            inputs.DelayFileCount = delayFiles;
+            inputs.FieldConstant = fieldConstant;
+            inputs.SignatureWeight = signatureWeight;
+            inputs.SamplingRate = samplingRate;
+            inputs.MeasurementMs = measurementMs;
+            return true;
+        }
+
+        private static SignatureWaveData LoadSignatureWave(string defaultDir, int fileCount, int measurementMs, int ratioSps)
+        {
+            var dirWave = new DirectoryInfo(Path.Combine(defaultDir, "Signature Wave"));
+            FileInfo[] filesWave = GetNumericFiles(dirWave, fileCount);
+
+            int startWave = 270 * ratioSps;
+            int endWave = measurementMs * ratioSps;
+            if (endWave <= startWave)
+            {
+                throw new InvalidOperationException("Lama Pengukuran terlalu kecil untuk window signature.");
+            }
+
             int lengthWave = endWave - startWave;
-            string[,] newDataStringWave = new string[jumlahFileWave, lengthWave];
-            for (int d1=0; d1<jumlahFileWave; d1++)
-            {
-                for (int d2=0; d2<lengthWave; d2++)
-                {
-                    newDataStringWave[d1, d2] = dataListWave[d1][d2+startWave];
-                }
-            }
-
-            double[,] tranWavePart = new double[jumlahFileWave, lengthWave];
-            double[,] vertWavePart = new double[jumlahFileWave, lengthWave];
-            double[,] longWavePart = new double[jumlahFileWave, lengthWave];
-            double[,] waveList = new double[3, lengthWave];
-            for (int e1=0; e1<jumlahFileWave; e1++)
-            {
-                for (int e2=0; e2<lengthWave; e2++)
-                {
-                    string[] tokens = new string[4];
-                    tokens = newDataStringWave[e1, e2].Split(new string[] { "    	", "     ", "    " }, StringSplitOptions.None);
-                    for (int e3=0; e3<3; e3++)
-                    {
-                        double value = 0;
-                        if (Double.TryParse(tokens[e3], out value) && e3 == 0)
-                        {
-                            tranWavePart[e1, e2] = value;                            
-                        }
-                        if (Double.TryParse(tokens[e3], out value) && e3 == 1)
-                        {
-                            vertWavePart[e1, e2] = value;
-                        }
-                        if (Double.TryParse(tokens[e3], out value) && e3 == 2)
-                        {
-                            longWavePart[e1, e2] = value;
-                        }
-                    }
-                }
-            }
-
             double[] sumTran = new double[lengthWave];
             double[] sumVert = new double[lengthWave];
             double[] sumLong = new double[lengthWave];
-            for (int f1=0; f1<jumlahFileWave; f1++)
+
+            foreach (FileInfo file in filesWave)
             {
-                for (int f2=0; f2<lengthWave; f2++)
+                string[] lines = File.ReadAllLines(file.FullName);
+                if (lines.Length <= endWave)
                 {
-                    sumTran[f2] = sumTran[f2] + tranWavePart[f1, f2];
-                    sumVert[f2] = sumVert[f2] + vertWavePart[f1, f2];
-                    sumLong[f2] = sumLong[f2] + longWavePart[f1, f2];
+                    throw new InvalidOperationException($"File signature terlalu pendek: {file.Name}");
+                }
+
+                for (int i = 0; i < lengthWave; i++)
+                {
+                    string line = lines[startWave + i];
+                    if (!TryParseWaveLine(line, out double tran, out double vert, out double lon))
+                    {
+                        throw new InvalidOperationException($"Format data signature tidak valid: {file.Name}");
+                    }
+
+                    sumTran[i] += tran;
+                    sumVert[i] += vert;
+                    sumLong[i] += lon;
                 }
             }
 
             double[] tranWave = new double[lengthWave];
             double[] vertWave = new double[lengthWave];
             double[] longWave = new double[lengthWave];
-            for (int g=0; g<lengthWave; g++)
+
+            for (int i = 0; i < lengthWave; i++)
             {
-                tranWave[g] = sumTran[g]/jumlahFileWave;
-                vertWave[g] = sumVert[g]/jumlahFileWave;
-                longWave[g] = sumLong[g]/jumlahFileWave;
+                tranWave[i] = sumTran[i] / fileCount;
+                vertWave[i] = sumVert[i] / fileCount;
+                longWave[i] = sumLong[i] / fileCount;
             }
 
-            int jumlahFileDelay = Int32.Parse(textBox2.Text);
-            //int jumlahFileDelay = 8;
-            //DirectoryInfo dirDelay = new DirectoryInfo(@"C:\Users\user\Desktop\Delay Scenario\");
-            DirectoryInfo dirDelay = new DirectoryInfo($@"{defaultDir}\Delay Scenario\");
-            FileInfo[] filesDelay = dirDelay.GetFiles("*.txt");
-            int[] namaFileIntDelay = new int[jumlahFileDelay];
-            string[] namaFileStringDelay = new string[jumlahFileDelay];
-            for (int h = 0; h < jumlahFileDelay; h++)
+            return new SignatureWaveData
             {
-                int valueDelay = 0;
-                int posDelay = filesDelay[h].Name.IndexOf(".");
-                namaFileStringDelay[h] = filesDelay[h].Name;
-                string cutNameDelay = namaFileStringDelay[h].Remove(posDelay);
-                Int32.TryParse(cutNameDelay, out valueDelay);
-                namaFileIntDelay[h] = valueDelay;
-            }
-            Array.Sort(namaFileIntDelay);
+                Tran = tranWave,
+                Vert = vertWave,
+                Long = longWave,
+                Length = lengthWave
+            };
+        }
 
-            for (int i = 0; i < jumlahFileDelay; i++)
-            {
-                namaFileStringDelay[i] = namaFileIntDelay[i].ToString();
-            }
+        private static DelayScenarioData LoadDelayScenarios(string defaultDir, int fileCount, int ratioSps)
+        {
+            var dirDelay = new DirectoryInfo(Path.Combine(defaultDir, "Delay Scenario"));
+            FileInfo[] filesDelay = GetNumericFiles(dirDelay, fileCount);
 
-            List<string[]> dataListStringDelay = new List<string[]>();
-            for (int j = 0; j < jumlahFileDelay; j++)
-            {
-                var lineCount1 = System.IO.File.ReadAllLines($@"{defaultDir}\Delay Scenario\{namaFileStringDelay[j]}.txt").Length;
-                string[] assignDataDelay = new string[lineCount1];
-                assignDataDelay = System.IO.File.ReadAllLines($@"{defaultDir}\Delay Scenario\{namaFileStringDelay[j]}.txt");
-                dataListStringDelay.Add(assignDataDelay);
-            }
+            int[][] delays = new int[fileCount][];
+            int maxDelay = 0;
 
-            int[] listLineDelay = new int[jumlahFileDelay];
-            int startDelay = 1;
-            List<string[]> newStringDataDelay = new List<string[]>();
-            for (int k1 = 0; k1 < jumlahFileDelay; k1++)
+            for (int i = 0; i < fileCount; i++)
             {
-                var lineCount2 = System.IO.File.ReadAllLines($@"{defaultDir}\Delay Scenario\{namaFileStringDelay[k1]}.txt").Length;
-                int lengthDelay = lineCount2-startDelay;
-                listLineDelay[k1] = lengthDelay;
-                string[] assignNewStringDataDelay = new string[lengthDelay];
-                for (int k2=0; k2<lengthDelay; k2++)
+                string[] lines = File.ReadAllLines(filesDelay[i].FullName);
+                if (lines.Length <= 1)
                 {
-                    assignNewStringDataDelay[k2] = dataListStringDelay[k1][k2 + startDelay];
-                    
+                    throw new InvalidOperationException($"Delay file tidak memiliki data: {filesDelay[i].Name}");
                 }
-                newStringDataDelay.Add(assignNewStringDataDelay);
-            }
 
-            List<int[]> dataListIntDelay = new List<int[]>();
-            for (int l1=0; l1<jumlahFileDelay; l1++)
-            {
-                int[] assignNewIntDataDelay = new int[listLineDelay[l1]];
-                for (int l2=0; l2<listLineDelay[l1]; l2++)
+                int dataLength = lines.Length - 1;
+                int[] delayValues = new int[dataLength];
+                for (int j = 0; j < dataLength; j++)
                 {
-                    int values = 0;
-                    Int32.TryParse(newStringDataDelay[l1][l2], out values);
-                    assignNewIntDataDelay[l2] = values;
-                }
-                dataListIntDelay.Add(assignNewIntDataDelay);
-            }
-
-            int[] listMaxValueDelay = new int[jumlahFileDelay];
-            int addLength = 0;
-            List<int[]> newListDelay = new List<int[]>();
-            for (int m1 = 0; m1 < jumlahFileDelay; m1++)
-            {
-                int[] sortDelay = new int[listLineDelay[m1]];
-                for (int m2 = 0; m2 < listLineDelay[m1]; m2++)
-                {
-                    sortDelay[m2] = rasiosps*dataListIntDelay[m1][m2];
-                }
-                int maxValueDelay = sortDelay.Max();
-                if (maxValueDelay>addLength)
-                {
-                    addLength = maxValueDelay;
-                }
-                listMaxValueDelay[m1] = maxValueDelay;
-                Array.Sort(sortDelay);
-                newListDelay.Add(sortDelay);
-            }
-            Console.WriteLine(addLength);
-            DirectoryInfo dirWeight = new DirectoryInfo($@"{defaultDir}\Explosive Weight\");
-            FileInfo[] filesWeight = dirDelay.GetFiles("*.txt");
-            int[] namaFileIntWeight = new int[jumlahFileDelay];
-            string[] namaFileStringWeight = new string[jumlahFileDelay];
-            for (int n = 0; n < jumlahFileDelay; n++)
-            {
-                int valueWeight = 0;
-                int posWeight = filesWeight[n].Name.IndexOf(".");
-                namaFileStringWeight[n] = filesWeight[n].Name;
-                string cutNameWeight = namaFileStringWeight[n].Remove(posWeight);
-                Int32.TryParse(cutNameWeight, out valueWeight);
-                namaFileIntWeight[n] = valueWeight;
-            }
-            Array.Sort(namaFileIntWeight);
-
-            for (int o = 0; o < jumlahFileDelay; o++)
-            {
-                namaFileStringWeight[o] = namaFileIntWeight[o].ToString();
-            }
-
-            List<double[]> dataListWeight = new List<double[]>();
-            for (int p = 0; p < jumlahFileDelay; p++)
-            {
-                var lineCount3 = System.IO.File.ReadAllLines($@"{defaultDir}\Explosive Weight\{namaFileStringWeight[p]}.txt").Length;
-                string[] assignStringDataWeight = new string[lineCount3];
-                double[] assignDoubleDataWeight = new double[lineCount3];
-                assignStringDataWeight = System.IO.File.ReadAllLines($@"{defaultDir}\Explosive Weight\{namaFileStringWeight[p]}.txt");
-                for (int p1 = 0; p1 < lineCount3; p1++)
-                {
-                    double valueWeight = 0;
-                    Double.TryParse(assignStringDataWeight[p1], out valueWeight);
-                    assignDoubleDataWeight[p1] = valueWeight;
-                }
-                dataListWeight.Add(assignDoubleDataWeight);
-            }
-
-            double konstantaLapangan = Double.Parse(textBox3.Text);
-            //double konstantaLapangan = 2;
-            double beratBahanPeledakSignature = Double.Parse(textBox4.Text);
-            //double beratBahanPeledakSignature = 50;
-            int waveLength = lengthWave + addLength + 100;
-            double[,] listTranWave = new double[jumlahFileDelay, waveLength];
-            double[,] listVertWave = new double[jumlahFileDelay, waveLength];
-            double[,] listLongWave = new double[jumlahFileDelay, waveLength];
-            double[,] listPVS = new double[jumlahFileDelay, waveLength];
-            /*double distance1 = 143.97;
-            double distance2 = 138.24;
-            double distance3 = 130.95;
-            double distance4 = 128.57;
-            double distance5 = 122.81;
-            double distance6 = 119.74;
-            int jumlahDistance = 6;
-            double averageDistance = (distance1 + distance2 + distance3 + distance4 + distance5 + distance6) / jumlahDistance;*/
-            List<double[]> dataListDistanceAvg = new List<double[]>();
-            var lineCount4 = System.IO.File.ReadAllLines($@"{defaultDir}\Simulation Distance\distanceaverage.txt").Length;
-            double sumDistance = 0;
-            string[] assignStringDataDistanceAvg = new string[lineCount4];
-            double[] assignDoubleDataDistanceAvg = new double[lineCount4];
-            assignStringDataDistanceAvg = System.IO.File.ReadAllLines($@"{defaultDir}\Simulation Distance\distanceaverage.txt");
-            for (int jk = 0; jk < lineCount4; jk++)
-            {
-                double valueDistanceAvg = 0;
-                Double.TryParse(assignStringDataDistanceAvg[jk], out valueDistanceAvg);
-                assignDoubleDataDistanceAvg[jk] = valueDistanceAvg;
-                sumDistance = sumDistance + assignDoubleDataDistanceAvg[jk];
-            }
-            dataListDistanceAvg.Add(assignDoubleDataDistanceAvg);
-
-            List<double[]> dataListDistanceSimul = new List<double[]>();
-            var lineCount5 = System.IO.File.ReadAllLines($@"{defaultDir}\Simulation Distance\distancesimulation.txt").Length;
-            string[] assignStringDataDistanceSimul = new string[lineCount4];
-            double[] assignDoubleDataDistanceSimul = new double[lineCount4];
-            assignStringDataDistanceSimul = System.IO.File.ReadAllLines($@"{defaultDir}\Simulation Distance\distancesimulation.txt");
-            for (int kj = 0; kj < lineCount5; kj++)
-            {
-                double valueDistanceSimul = 0;
-                Double.TryParse(assignStringDataDistanceSimul[kj], out valueDistanceSimul);
-                assignDoubleDataDistanceSimul[kj] = valueDistanceSimul;
-            }
-            dataListDistanceSimul.Add(assignDoubleDataDistanceSimul);
-            
-            //double averageDistance = Double.Parse(textBox5.Text); //130.71m
-            //double simulatedDistance = Double.Parse(textBox6.Text);
-            double averageDistance = sumDistance / lineCount4;
-            //double distanceRatio = simulatedDistance / averageDistance;
-            double[] distanceRatio = new double[lineCount5];
-            for (int xx=0; xx<lineCount5; xx++)
-            {
-                distanceRatio[xx] = assignDoubleDataDistanceSimul[xx] / averageDistance;
-            }
-
-            for (int q=0; q<jumlahFileDelay; q++)
-            {
-                for (int q1=0; q1<listLineDelay[q]; q1++)
-                {
-                    int add = newListDelay[q][q1];
-                    for (int q2=0; q2<lengthWave; q2++)
+                    if (!int.TryParse(lines[j + 1], out int value))
                     {
-                        //Rumus PPV menggunakan USBM
-                        listTranWave[q, q2 + add] = listTranWave[q, q2 + add] + (tranWave[q2] * (Math.Pow((dataListWeight[q][q1] / beratBahanPeledakSignature) / Math.Pow(distanceRatio[q], 2), 0.5 * konstantaLapangan)));
-                        listVertWave[q, q2 + add] = listVertWave[q, q2 + add] + (vertWave[q2] * (Math.Pow((dataListWeight[q][q1] / beratBahanPeledakSignature) / Math.Pow(distanceRatio[q], 2), 0.5 * konstantaLapangan)));
-                        listLongWave[q, q2 + add] = listLongWave[q, q2 + add] + (longWave[q2] * (Math.Pow((dataListWeight[q][q1] / beratBahanPeledakSignature) / Math.Pow(distanceRatio[q], 2), 0.5 * konstantaLapangan)));
+                        throw new InvalidOperationException($"Data delay tidak valid: {filesDelay[i].Name}");
+                    }
+                    delayValues[j] = value * ratioSps;
+                }
+
+                Array.Sort(delayValues);
+                delays[i] = delayValues;
+                if (delayValues.Length > 0 && delayValues[delayValues.Length - 1] > maxDelay)
+                {
+                    maxDelay = delayValues[delayValues.Length - 1];
+                }
+            }
+
+            return new DelayScenarioData
+            {
+                Delays = delays,
+                MaxDelay = maxDelay
+            };
+        }
+
+        private static WeightData LoadWeights(string defaultDir, int fileCount)
+        {
+            var dirWeight = new DirectoryInfo(Path.Combine(defaultDir, "Explosive Weight"));
+            FileInfo[] filesWeight = GetNumericFiles(dirWeight, fileCount);
+
+            double[][] weights = new double[fileCount][];
+            for (int i = 0; i < fileCount; i++)
+            {
+                string[] lines = File.ReadAllLines(filesWeight[i].FullName);
+                double[] data = new double[lines.Length];
+                for (int j = 0; j < lines.Length; j++)
+                {
+                    if (!double.TryParse(lines[j], out double value))
+                    {
+                        throw new InvalidOperationException($"Data weight tidak valid: {filesWeight[i].Name}");
+                    }
+                    data[j] = value;
+                }
+                weights[i] = data;
+            }
+
+            return new WeightData { Weights = weights };
+        }
+
+        private static DistanceData LoadDistanceData(string defaultDir, int scenarioCount)
+        {
+            string distanceDir = Path.Combine(defaultDir, "Simulation Distance");
+            string[] avgLines = File.ReadAllLines(Path.Combine(distanceDir, "distanceaverage.txt"));
+            if (avgLines.Length == 0)
+            {
+                throw new InvalidOperationException("distanceaverage.txt kosong.");
+            }
+
+            double sumDistance = 0;
+            for (int i = 0; i < avgLines.Length; i++)
+            {
+                if (!double.TryParse(avgLines[i], out double value))
+                {
+                    throw new InvalidOperationException("Data distance average tidak valid.");
+                }
+                sumDistance += value;
+            }
+
+            double averageDistance = sumDistance / avgLines.Length;
+            if (averageDistance <= 0)
+            {
+                throw new InvalidOperationException("Average distance tidak valid.");
+            }
+
+            string[] simLines = File.ReadAllLines(Path.Combine(distanceDir, "distancesimulation.txt"));
+            if (simLines.Length < scenarioCount)
+            {
+                throw new InvalidOperationException("Jumlah distance simulation lebih sedikit dari skenario.");
+            }
+
+            double[] ratios = new double[simLines.Length];
+            for (int i = 0; i < simLines.Length; i++)
+            {
+                if (!double.TryParse(simLines[i], out double value))
+                {
+                    throw new InvalidOperationException("Data distance simulation tidak valid.");
+                }
+                ratios[i] = value / averageDistance;
+            }
+
+            return new DistanceData { Ratios = ratios };
+        }
+
+        private static void ValidateScenarioAlignment(DelayScenarioData delays, WeightData weights, DistanceData distances)
+        {
+            if (delays.Delays.Length != weights.Weights.Length)
+            {
+                throw new InvalidOperationException("Jumlah file delay dan weight tidak sama.");
+            }
+
+            for (int i = 0; i < delays.Delays.Length; i++)
+            {
+                if (delays.Delays[i].Length != weights.Weights[i].Length)
+                {
+                    throw new InvalidOperationException($"Jumlah data delay dan weight tidak sama pada skenario {i + 1}.");
+                }
+            }
+
+            if (distances.Ratios.Length < delays.Delays.Length)
+            {
+                throw new InvalidOperationException("Jumlah distance ratio kurang dari jumlah skenario.");
+            }
+        }
+
+        private static ComputationResult ComputeScenarioWaves(
+            SignatureWaveData signature,
+            DelayScenarioData delays,
+            WeightData weights,
+            DistanceData distances,
+            double fieldConstant,
+            double signatureWeight)
+        {
+            int scenarioCount = delays.Delays.Length;
+            int waveLength = signature.Length + delays.MaxDelay + 100;
+
+            double[,] listTranWave = new double[scenarioCount, waveLength];
+            double[,] listVertWave = new double[scenarioCount, waveLength];
+            double[,] listLongWave = new double[scenarioCount, waveLength];
+            double[,] listPvs = new double[scenarioCount, waveLength];
+
+            for (int scenario = 0; scenario < scenarioCount; scenario++)
+            {
+                double distanceRatio = distances.Ratios[scenario];
+                if (distanceRatio <= 0)
+                {
+                    throw new InvalidOperationException($"Distance ratio tidak valid pada skenario {scenario + 1}.");
+                }
+
+                int[] delayList = delays.Delays[scenario];
+                double[] weightList = weights.Weights[scenario];
+
+                for (int i = 0; i < delayList.Length; i++)
+                {
+                    int add = delayList[i];
+                    double scale = Math.Pow(
+                        (weightList[i] / signatureWeight) / Math.Pow(distanceRatio, 2),
+                        0.5 * fieldConstant);
+
+                    for (int sample = 0; sample < signature.Length; sample++)
+                    {
+                        int targetIndex = sample + add;
+                        listTranWave[scenario, targetIndex] += signature.Tran[sample] * scale;
+                        listVertWave[scenario, targetIndex] += signature.Vert[sample] * scale;
+                        listLongWave[scenario, targetIndex] += signature.Long[sample] * scale;
                     }
                 }
             }
 
-            for (int z = 0; z < jumlahFileDelay; z++)
+            for (int scenario = 0; scenario < scenarioCount; scenario++)
             {
-                for (int z1 = 0; z1 < waveLength; z1++)
+                for (int sample = 0; sample < waveLength; sample++)
                 {
-                     listPVS[z, z1] = listPVS[z, z1] + Math.Sqrt(Math.Pow(listTranWave[z, z1], 2) + Math.Pow(listVertWave[z, z1], 2) + Math.Pow(listLongWave[z, z1], 2));
+                    double tran = listTranWave[scenario, sample];
+                    double vert = listVertWave[scenario, sample];
+                    double lon = listLongWave[scenario, sample];
+                    listPvs[scenario, sample] = Math.Sqrt(tran * tran + vert * vert + lon * lon);
                 }
             }
 
-
-            double[,] listPPV = new double[4, jumlahFileDelay];
-            for (int r=0; r<jumlahFileDelay; r++)
+            double[,] listPpv = new double[4, scenarioCount];
+            for (int scenario = 0; scenario < scenarioCount; scenario++)
             {
-                double[] tranPart = new double[waveLength];
-                double[] vertPart = new double[waveLength];
-                double[] longPart = new double[waveLength];
-                double[] pvsPart = new double[waveLength];
-                for (int r1=0; r1<waveLength; r1++)
-                {
-                    tranPart[r1] = listTranWave[r, r1];
-                    vertPart[r1] = listVertWave[r, r1];
-                    longPart[r1] = listLongWave[r, r1];
-                    pvsPart[r1] = listPVS[r, r1];
-                }
-                listPPV[0, r] = tranPart.Max();
-                if (Math.Abs(tranPart.Min()) > tranPart.Max())
-                {
-                    listPPV[0, r] = tranPart.Min();
-                }
-                listPPV[1, r] = vertPart.Max();
-                if (Math.Abs(vertPart.Min()) > vertPart.Max())
-                {
-                    listPPV[1, r] = vertPart.Min();
-                }
-                listPPV[2, r] = longPart.Max();
-                if (Math.Abs(longPart.Min()) > longPart.Max())
-                {
-                    listPPV[2, r] = longPart.Min();
-                }
-                listPPV[3, r] = pvsPart.Max();
-                if (Math.Abs(pvsPart.Min()) > pvsPart.Max())
-                {
-                    listPPV[3, r] = pvsPart.Min();
-                }
+                double[] tranPart = ExtractWave(listTranWave, scenario, waveLength);
+                double[] vertPart = ExtractWave(listVertWave, scenario, waveLength);
+                double[] longPart = ExtractWave(listLongWave, scenario, waveLength);
+                double[] pvsPart = ExtractWave(listPvs, scenario, waveLength);
+
+                listPpv[0, scenario] = GetPeakAbs(tranPart);
+                listPpv[1, scenario] = GetPeakAbs(vertPart);
+                listPpv[2, scenario] = GetPeakAbs(longPart);
+                listPpv[3, scenario] = GetPeakAbs(pvsPart);
             }
 
-            double[] tranParts = new double[jumlahFileDelay];
-            double[] vertParts = new double[jumlahFileDelay];
-            double[] longParts = new double[jumlahFileDelay];
-            double[] pvsParts = new double[jumlahFileDelay];
-            for (int s=0; s<jumlahFileDelay; s++)
+            double[] tranParts = new double[scenarioCount];
+            double[] vertParts = new double[scenarioCount];
+            double[] longParts = new double[scenarioCount];
+            double[] pvsParts = new double[scenarioCount];
+            for (int i = 0; i < scenarioCount; i++)
             {
-                tranParts[s] = listPPV[0, s];
-                vertParts[s] = listPPV[1, s];
-                longParts[s] = listPPV[2, s];
-                pvsParts[s] = listPPV[3, s];
+                tranParts[i] = listPpv[0, i];
+                vertParts[i] = listPpv[1, i];
+                longParts[i] = listPpv[2, i];
+                pvsParts[i] = listPpv[3, i];
             }
 
-            double ppvTranSignature = tranWave.Max();
-            if (Math.Abs(tranWave.Min()) > tranWave.Max())
-            {
-                ppvTranSignature = tranWave.Min();
-            }
-            double ppvVertSignature = vertWave.Max();
-            if (Math.Abs(vertWave.Min()) > vertWave.Max())
-            {
-                ppvVertSignature = vertWave.Min();
-            }
-            double ppvLongSignature = longWave.Max();
-            if (Math.Abs(longWave.Min()) > longWave.Max())
-            {
-                ppvLongSignature = longWave.Min();
-            }
+            double ppvTranFull = GetMinAbs(tranParts, out int optTranIndex);
+            double ppvVertFull = GetMinAbs(vertParts, out int optVertIndex);
+            double ppvLongFull = GetMinAbs(longParts, out int optLongIndex);
+            double ppvPvs = GetMinAbs(pvsParts, out int optPvsIndex);
 
-            double ppvTranFull = tranParts.Min(element => Math.Abs(element));
-            if (Array.IndexOf(tranParts, ppvTranFull) == -1)
+            return new ComputationResult
             {
-                ppvTranFull = ppvTranFull * -1;
-            }
-            double ppvVertFull = vertParts.Min(element => Math.Abs(element));
-            if (Array.IndexOf(vertParts, ppvVertFull) == -1)
-            {
-                ppvVertFull = ppvVertFull * -1;
-            }
-            double ppvLongFull = longParts.Min(element => Math.Abs(element));
-            if (Array.IndexOf(longParts, ppvLongFull) == -1)
-            {
-                ppvLongFull = ppvLongFull * -1;
-            }
-            double ppvPVS = pvsParts.Min(element => Math.Abs(element));
-            if (Array.IndexOf(pvsParts, ppvPVS) == -1)
-            {
-                ppvPVS = ppvPVS * -1;
-            }
+                WaveLength = waveLength,
+                Tran = listTranWave,
+                Vert = listVertWave,
+                Long = listLongWave,
+                Pvs = listPvs,
+                Ppv = listPpv,
+                OptTranIndex = optTranIndex,
+                OptVertIndex = optVertIndex,
+                OptLongIndex = optLongIndex,
+                OptPvsIndex = optPvsIndex,
+                OptTranPpv = ppvTranFull,
+                OptVertPpv = ppvVertFull,
+                OptLongPpv = ppvLongFull,
+                OptPvsPpv = ppvPvs
+            };
+        }
 
-            int indeksOptimumTran = Array.IndexOf(tranParts, ppvTranFull);
-            int indeksOptimumVert = Array.IndexOf(vertParts, ppvVertFull);
-            int indeksOptimumLong = Array.IndexOf(longParts, ppvLongFull);
-            int indeksOptimumPVS = Array.IndexOf(pvsParts, ppvPVS);
+        private void UpdateUi(SignatureWaveData signature, ComputationResult result, int samplingRate)
+        {
+            double ppvTranSignature = GetPeakAbs(signature.Tran);
+            double ppvVertSignature = GetPeakAbs(signature.Vert);
+            double ppvLongSignature = GetPeakAbs(signature.Long);
 
-            Console.WriteLine(lineCount4);
-            Console.WriteLine(sumDistance);
-            Console.WriteLine(averageDistance);
-            Console.WriteLine(jumlahFileDelay);
-            for (int kl=0; kl<lineCount5; kl++)
-            {
-                Console.WriteLine(distanceRatio[kl]);
-            }
-
-            double[] tesTran = new double[waveLength];
-            double[] tesVert = new double[waveLength];
-            double[] tesLong = new double[waveLength];
-            double[] tesPVS = new double[waveLength];
-            for (int tes=0; tes<waveLength; tes++)
-            {
-                tesTran[tes] = listTranWave[indeksOptimumTran, tes];
-                tesVert[tes] = listVertWave[indeksOptimumVert, tes];
-                tesLong[tes] = listLongWave[indeksOptimumLong, tes];
-                tesPVS[tes] = listPVS[indeksOptimumPVS, tes];
-            }
-
-            label2.Text = $"Signature Wave(mm/s, 1/{sps} ms)";
-            label1.Text = $"Optimized Full Blast Wave(mm/s, 1/{sps} ms)";
-            label15.Text = $"Optimized Peak Vector Sum(mm/s, 1/{sps} ms)";
+            label2.Text = $"Signature Wave(mm/s, 1/{samplingRate} ms)";
+            label1.Text = $"Optimized Full Blast Wave(mm/s, 1/{samplingRate} ms)";
+            label15.Text = $"Optimized Peak Vector Sum(mm/s, 1/{samplingRate} ms)";
             label9.Text = $"Signature Transversal Wave PPV = {ppvTranSignature} mm/s";
             label10.Text = $"Signature Vertical Wave PPV = {ppvVertSignature} mm/s";
             label11.Text = $"Signature Longitudinal Wave PPV = {ppvLongSignature} mm/s";
-            label12.Text = $"Skenario {indeksOptimumTran+1} Full Blast Transversal Wave PPV = {ppvTranFull} mm/s";
-            label13.Text = $"Skenario {indeksOptimumVert+1} Full Blast Vertical Wave PPV = {ppvVertFull} mm/s";
-            label14.Text = $"Skenario {indeksOptimumLong+1} Full Blast Longitudinal Wave PPV = {ppvLongFull} mm/s";
-            label16.Text = $"Skenario {indeksOptimumPVS+1} Peak Vector Sum PPV = {ppvPVS} mm/s";
+            label12.Text = $"Skenario {result.OptTranIndex + 1} Full Blast Transversal Wave PPV = {result.OptTranPpv} mm/s";
+            label13.Text = $"Skenario {result.OptVertIndex + 1} Full Blast Vertical Wave PPV = {result.OptVertPpv} mm/s";
+            label14.Text = $"Skenario {result.OptLongIndex + 1} Full Blast Longitudinal Wave PPV = {result.OptLongPpv} mm/s";
+            label16.Text = $"Skenario {result.OptPvsIndex + 1} Peak Vector Sum PPV = {result.OptPvsPpv} mm/s";
 
+            dataGridView1.Columns.Clear();
+            dataGridView1.Rows.Clear();
             dataGridView1.Columns.Add("Skenario", "Skenario Delay");
-            dataGridView1.Columns.Add("Value", "PPV Tran (mm/s)");
-            dataGridView1.Columns.Add("Value", "PPV Vert (mm/s)");
-            dataGridView1.Columns.Add("Value", "PPV Long (mm/s)");
-            dataGridView1.Columns.Add("Value", "PPV PVS (mm/s)");
+            dataGridView1.Columns.Add("PpvTran", "PPV Tran (mm/s)");
+            dataGridView1.Columns.Add("PpvVert", "PPV Vert (mm/s)");
+            dataGridView1.Columns.Add("PpvLong", "PPV Long (mm/s)");
+            dataGridView1.Columns.Add("PpvPvs", "PPV PVS (mm/s)");
 
-            for (int sa = 0; sa < jumlahFileDelay; sa++)
+            int scenarioCount = result.Ppv.GetLength(1);
+            for (int i = 0; i < scenarioCount; i++)
             {
-                dataGridView1.Rows.Add(new object[] { sa + 1, listPPV[0, sa], listPPV[1, sa], listPPV[2, sa], listPPV[3, sa]});
+                dataGridView1.Rows.Add(new object[]
+                {
+                    i + 1,
+                    result.Ppv[0, i],
+                    result.Ppv[1, i],
+                    result.Ppv[2, i],
+                    result.Ppv[3, i]
+                });
             }
 
-            chart1.Series.Clear();
-            var series1 = new System.Windows.Forms.DataVisualization.Charting.Series
+            PlotSeries(chart1, signature.Tran, System.Drawing.Color.Turquoise);
+            PlotSeries(chart2, signature.Vert, System.Drawing.Color.Blue);
+            PlotSeries(chart3, signature.Long, System.Drawing.Color.Purple);
+
+            PlotSeries(chart4, ExtractWave(result.Tran, result.OptTranIndex, result.WaveLength), System.Drawing.Color.Turquoise);
+            PlotSeries(chart5, ExtractWave(result.Vert, result.OptVertIndex, result.WaveLength), System.Drawing.Color.Blue);
+            PlotSeries(chart6, ExtractWave(result.Long, result.OptLongIndex, result.WaveLength), System.Drawing.Color.Purple);
+            PlotSeries(chart7, ExtractWave(result.Pvs, result.OptPvsIndex, result.WaveLength), System.Drawing.Color.Green);
+        }
+
+        private static void PlotSeries(System.Windows.Forms.DataVisualization.Charting.Chart chart, double[] data, System.Drawing.Color color)
+        {
+            chart.Series.Clear();
+            var series = new System.Windows.Forms.DataVisualization.Charting.Series
             {
-                Name = "Series1",
-                Color = System.Drawing.Color.Turquoise,
+                Name = "Series",
+                Color = color,
                 IsVisibleInLegend = false,
                 IsXValueIndexed = true,
                 ChartType = SeriesChartType.Line
             };
 
-            this.chart1.Series.Add(series1);
-
-            for (int i = 0; i < lengthWave; i++)
+            chart.Series.Add(series);
+            for (int i = 0; i < data.Length; i++)
             {
-                series1.Points.AddXY(i, tranWave[i]);
+                series.Points.AddXY(i, data[i]);
             }
-            /*cartesianChart1.Series = new SeriesCollection
-            {
-                new LineSeries
-                {
-                    Title = $"Transversal Wave Skenario {indeksOptimumTran}",
-                    Values = new ChartValues<double> (tranWave),
-                    LineSmoothness = 0,
-                    PointGeometry = null,
-                    StrokeThickness = 0.75,
-                    Stroke = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(3, 181, 252)),
-                    Fill = System.Windows.Media.Brushes.Transparent,
-                }
-            };*/
-            chart2.Series.Clear();
-            var series2 = new System.Windows.Forms.DataVisualization.Charting.Series
-            {
-                Name = "Series2",
-                Color = System.Drawing.Color.Blue,
-                IsVisibleInLegend = false,
-                IsXValueIndexed = true,
-                ChartType = SeriesChartType.Line
-            };
+        }
 
-            this.chart2.Series.Add(series2);
-
-            for (int i = 0; i < lengthWave; i++)
+        private static FileInfo[] GetNumericFiles(DirectoryInfo dir, int expectedCount)
+        {
+            if (!dir.Exists)
             {
-                series2.Points.AddXY(i, vertWave[i]);
-            }
-            /*cartesianChart2.Series = new SeriesCollection
-            {
-                new LineSeries
-                {
-                    Title = $"Vertical Wave Skenario {indeksOptimumVert}",
-                    Values = new ChartValues<double> (vertWave),
-                    LineSmoothness = 0,
-                    PointGeometry = null,
-                    StrokeThickness = 0.75,
-                    Stroke = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(24, 3, 252)),
-                    Fill = System.Windows.Media.Brushes.Transparent,
-                }
-            };*/
-            chart3.Series.Clear();
-            var series3 = new System.Windows.Forms.DataVisualization.Charting.Series
-            {
-                Name = "Series3",
-                Color = System.Drawing.Color.Purple,
-                IsVisibleInLegend = false,
-                IsXValueIndexed = true,
-                ChartType = SeriesChartType.Line
-            };
-
-            this.chart3.Series.Add(series3);
-
-            for (int i = 0; i < lengthWave; i++)
-            {
-                series3.Points.AddXY(i, longWave[i]);
+                throw new InvalidOperationException($"Folder not found: {dir.FullName}");
             }
 
-            /*cartesianChart3.Series = new SeriesCollection
+            FileInfo[] files = dir.GetFiles("*.txt");
+            var map = new Dictionary<int, FileInfo>();
+            foreach (FileInfo file in files)
             {
-                new LineSeries
+                if (int.TryParse(Path.GetFileNameWithoutExtension(file.Name), out int value) && value >= 1)
                 {
-                    Title = $"Longitudinal Wave Skenario {indeksOptimumLong}",
-                    Values = new ChartValues<double> (longWave),
-                    LineSmoothness = 0,
-                    PointGeometry = null,
-                    StrokeThickness = 0.75,
-                    Stroke = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(186, 3, 252)),
-                    Fill = System.Windows.Media.Brushes.Transparent, 
+                    if (map.ContainsKey(value))
+                    {
+                        throw new InvalidOperationException($"File bernomor {value} duplikat di {dir.Name}.");
+                    }
+                    map[value] = file;
                 }
-            };*/
-            chart4.Series.Clear();
-            var series4 = new System.Windows.Forms.DataVisualization.Charting.Series
-            {
-                Name = "Series4",
-                Color = System.Drawing.Color.Turquoise,
-                IsVisibleInLegend = false,
-                IsXValueIndexed = true,
-                ChartType = SeriesChartType.Line
-            };
-
-            this.chart4.Series.Add(series4);
-
-            for (int i = 0; i < waveLength; i++)
-            {
-                series4.Points.AddXY(i, tesTran[i]);
             }
-            /*cartesianChart4.Series = new SeriesCollection
-            {
-                new LineSeries
-                {
-                    Title = $"Optimized Transversal Wave Skenario {indeksOptimumTran}",
-                    Values = new ChartValues<double>(tesTran),
-                    LineSmoothness = 0,
-                    PointGeometry = null,
-                    StrokeThickness = 0.75,
-                    Stroke = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(3, 181, 252)),
-                    Fill = System.Windows.Media.Brushes.Transparent,
-                }
-            };*/
-            chart5.Series.Clear();
-            var series5 = new System.Windows.Forms.DataVisualization.Charting.Series
-            {
-                Name = "Series5",
-                Color = System.Drawing.Color.Blue,
-                IsVisibleInLegend = false,
-                IsXValueIndexed = true,
-                ChartType = SeriesChartType.Line
-            };
 
-            this.chart5.Series.Add(series5);
-
-            for (int i = 0; i < waveLength; i++)
+            if (map.Count < expectedCount)
             {
-                series5.Points.AddXY(i, tesVert[i]);
+                throw new InvalidOperationException($"Jumlah file di {dir.Name} lebih sedikit dari input.");
             }
-            /*cartesianChart5.Series = new SeriesCollection
+
+            var ordered = new List<FileInfo>(expectedCount);
+            for (int i = 1; i <= expectedCount; i++)
             {
-                new LineSeries
+                if (!map.TryGetValue(i, out FileInfo? file))
                 {
-                    Title = $"Optimized Vertical Wave Skenario {indeksOptimumVert}",
-                    Values = new ChartValues<double>(tesVert),
-                    LineSmoothness = 0,
-                    PointGeometry = null,
-                    StrokeThickness = 0.75,
-                    Stroke = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(24, 3, 252)),
-                    Fill = System.Windows.Media.Brushes.Transparent,
+                    throw new InvalidOperationException($"File di {dir.Name} harus bernomor mulai 1 sampai {expectedCount}.");
                 }
-            };*/
-            chart6.Series.Clear();
-            var series6 = new System.Windows.Forms.DataVisualization.Charting.Series
-            {
-                Name = "Series6",
-                Color = System.Drawing.Color.Purple,
-                IsVisibleInLegend = false,
-                IsXValueIndexed = true,
-                ChartType = SeriesChartType.Line
-            };
-
-            this.chart6.Series.Add(series6);
-
-            for (int i = 0; i < waveLength; i++)
-            {
-                series6.Points.AddXY(i, tesLong[i]);
+                ordered.Add(file);
             }
-            /*cartesianChart6.Series = new SeriesCollection
-            {
-                new LineSeries
-                {
-                    Title = $"Optimized Longitudinal Wave Skenario {indeksOptimumLong}",
-                    Values = new ChartValues<double>(tesLong),
-                    LineSmoothness = 0,
-                    PointGeometry = null,
-                    StrokeThickness = 0.75,
-                    Stroke = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(186, 3, 252)),
-                    Fill = System.Windows.Media.Brushes.Transparent,
-                }
-            };*/
-            chart7.Series.Clear();
-            var series7 = new System.Windows.Forms.DataVisualization.Charting.Series
-            {
-                Name = "Series7",
-                Color = System.Drawing.Color.Green,
-                IsVisibleInLegend = false,
-                IsXValueIndexed = true,
-                ChartType = SeriesChartType.Line
-            };
 
-            this.chart7.Series.Add(series7);
+            return ordered.ToArray();
+        }
 
-            for (int i = 0; i < waveLength; i++)
+        private static bool TryParseWaveLine(string line, out double tran, out double vert, out double lon)
+        {
+            tran = 0;
+            vert = 0;
+            lon = 0;
+
+            string[] tokens = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            if (tokens.Length < 3)
             {
-                series7.Points.AddXY(i, tesPVS[i]);
+                return false;
             }
-            /*cartesianChart7.Series = new SeriesCollection
+
+            return double.TryParse(tokens[0], out tran)
+                && double.TryParse(tokens[1], out vert)
+                && double.TryParse(tokens[2], out lon);
+        }
+
+        private static double GetPeakAbs(double[] values)
+        {
+            if (values.Length == 0)
             {
-                new LineSeries
+                return 0;
+            }
+
+            double best = values[0];
+            for (int i = 1; i < values.Length; i++)
+            {
+                if (Math.Abs(values[i]) > Math.Abs(best))
                 {
-                    Title = $"Optimized Peak Vector Sum {indeksOptimumPVS}",
-                    Values = new ChartValues<double>(tesPVS),
-                    LineSmoothness = 0,
-                    PointGeometry = null,
-                    StrokeThickness = 0.75,
-                    Stroke = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 255, 0)),
-                    Fill = System.Windows.Media.Brushes.Transparent,
+                    best = values[i];
                 }
-            };*/
+            }
+            return best;
+        }
+
+        private static double GetMinAbs(double[] values, out int index)
+        {
+            index = -1;
+            if (values.Length == 0)
+            {
+                return 0;
+            }
+
+            double best = values[0];
+            index = 0;
+            for (int i = 1; i < values.Length; i++)
+            {
+                if (Math.Abs(values[i]) < Math.Abs(best))
+                {
+                    best = values[i];
+                    index = i;
+                }
+            }
+            return best;
+        }
+
+        private static double[] ExtractWave(double[,] source, int row, int length)
+        {
+            double[] data = new double[length];
+            for (int i = 0; i < length; i++)
+            {
+                data[i] = source[row, i];
+            }
+            return data;
+        }
+
+        private void ShowError(string message)
+        {
+            MessageBox.Show(this, message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        private sealed class InputParams
+        {
+            public int SignatureFileCount { get; set; }
+            public int DelayFileCount { get; set; }
+            public int SamplingRate { get; set; }
+            public int MeasurementMs { get; set; }
+            public double FieldConstant { get; set; }
+            public double SignatureWeight { get; set; }
+        }
+
+        private sealed class SignatureWaveData
+        {
+            public double[] Tran { get; set; } = Array.Empty<double>();
+            public double[] Vert { get; set; } = Array.Empty<double>();
+            public double[] Long { get; set; } = Array.Empty<double>();
+            public int Length { get; set; }
+        }
+
+        private sealed class DelayScenarioData
+        {
+            public int[][] Delays { get; set; } = Array.Empty<int[]>();
+            public int MaxDelay { get; set; }
+        }
+
+        private sealed class WeightData
+        {
+            public double[][] Weights { get; set; } = Array.Empty<double[]>();
+        }
+
+        private sealed class DistanceData
+        {
+            public double[] Ratios { get; set; } = Array.Empty<double>();
+        }
+
+        private sealed class ComputationResult
+        {
+            public int WaveLength { get; set; }
+            public double[,] Tran { get; set; } = new double[0, 0];
+            public double[,] Vert { get; set; } = new double[0, 0];
+            public double[,] Long { get; set; } = new double[0, 0];
+            public double[,] Pvs { get; set; } = new double[0, 0];
+            public double[,] Ppv { get; set; } = new double[0, 0];
+            public int OptTranIndex { get; set; }
+            public int OptVertIndex { get; set; }
+            public int OptLongIndex { get; set; }
+            public int OptPvsIndex { get; set; }
+            public double OptTranPpv { get; set; }
+            public double OptVertPpv { get; set; }
+            public double OptLongPpv { get; set; }
+            public double OptPvsPpv { get; set; }
         }
     }
 }
+

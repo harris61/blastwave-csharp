@@ -1,4 +1,4 @@
-﻿namespace WindowsFormsApp3
+namespace BlastWaveCSharp
 {
     partial class Form1
     {
@@ -451,7 +451,7 @@
             // 
             // form1BindingSource
             // 
-            this.form1BindingSource.DataSource = typeof(WindowsFormsApp3.Form1);
+            this.form1BindingSource.DataSource = typeof(BlastWaveCSharp.Form1);
             // 
             // textBox5
             // 
@@ -567,4 +567,5 @@
         private System.Windows.Forms.Label label21;
     }
 }
+
 

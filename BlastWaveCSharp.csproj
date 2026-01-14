@@ -5,7 +5,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>Blast Wave PPV Optimizer</AssemblyName>
-    <RootNamespace>WindowsFormsApp3</RootNamespace>
+    <RootNamespace>BlastWaveCSharp</RootNamespace>
     <ApplicationIcon>sound__3__zx3_icon.ico</ApplicationIcon>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -25,3 +25,4 @@
   </ItemGroup>
 
 </Project>
+
