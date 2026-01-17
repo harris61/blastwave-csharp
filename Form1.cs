@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Collections;
 using System.Collections.Generic;
@@ -19,6 +20,7 @@ namespace BlastWaveCSharp
             InitializeComponent();
             _dataDirectory = GetDefaultDir();
             UpdateDirectoryLabel();
+            UpdateMetaInfo(0, 0, 0);
         }
 
         private void Button1_Click(object sender, EventArgs e)
@@ -59,6 +61,7 @@ namespace BlastWaveCSharp
                 SignatureWaveData signature = LoadSignatureWave(signatureFiles, inputs.MeasurementMs, ratioSps, samplingRate);
 
                 FileInfo[] delayFiles = GetNumericFiles(new DirectoryInfo(Path.Combine(dataDir, "Delay Scenario")));
+                UpdateMetaInfo(signatureFiles.Length, delayFiles.Length, samplingRate);
                 DelayScenarioData delays = LoadDelayScenarios(delayFiles, ratioSps);
                 WeightData weights = LoadWeights(dataDir, delayFiles.Length);
                 DistanceData distances = LoadDistanceData(dataDir, delayFiles.Length);
@@ -673,6 +676,33 @@ namespace BlastWaveCSharp
             MessageBox.Show(this, message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
+        private void LinkLabelAuthor_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            OpenLink("https://www.linkedin.com/in/harristio-adam/");
+        }
+
+        private void LinkLabelSupervisor_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            OpenLink("https://itb.ac.id/staf/profil/ganda-marihot-simangunsong");
+        }
+
+        private void LinkLabelGithub_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            OpenLink("https://github.com/harris61/blastwave-csharp");
+        }
+
+        private void OpenLink(string url)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Failed to open link.{Environment.NewLine}{ex.Message}");
+            }
+        }
+
         private void DataDirectoryToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using var dialog = new FolderBrowserDialog
@@ -691,6 +721,11 @@ namespace BlastWaveCSharp
         private void UpdateDirectoryLabel()
         {
             label22.Text = $"Data Directory: {_dataDirectory}";
+        }
+
+        private void UpdateMetaInfo(int signatureCount, int delayCount, int sampleRate)
+        {
+            label23.Text = $"Signature Files: {signatureCount} | Delay Files: {delayCount} | Sample Rate: {sampleRate} sps | Note: Sample Rate between signature wave must be the same.";
         }
 
         private static string NormalizeLine(string line)

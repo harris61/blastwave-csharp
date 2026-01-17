@@ -76,6 +76,14 @@ namespace BlastWaveCSharp
             this.label21 = new System.Windows.Forms.Label();
             this.label22 = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
+            this.label23 = new System.Windows.Forms.Label();
+            this.label24 = new System.Windows.Forms.Label();
+            this.linkLabelAuthor = new System.Windows.Forms.LinkLabel();
+            this.label25 = new System.Windows.Forms.Label();
+            this.linkLabelSupervisor = new System.Windows.Forms.LinkLabel();
+            this.label26 = new System.Windows.Forms.Label();
+            this.linkLabelGithub = new System.Windows.Forms.LinkLabel();
+            this.flowLayoutPanel2 = new System.Windows.Forms.FlowLayoutPanel();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.chart6)).BeginInit();
@@ -86,6 +94,7 @@ namespace BlastWaveCSharp
             ((System.ComponentModel.ISupportInitialize)(this.chart5)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.chart7)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.form1BindingSource)).BeginInit();
+            this.flowLayoutPanel2.SuspendLayout();
             this.SuspendLayout();
             // label1
             // 
@@ -261,7 +270,7 @@ namespace BlastWaveCSharp
             this.tableLayoutPanel1.Controls.Add(this.chart2, 0, 1);
             this.tableLayoutPanel1.Controls.Add(this.chart4, 1, 0);
             this.tableLayoutPanel1.Controls.Add(this.chart5, 1, 1);
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(3, 121);
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(3, 151);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 3;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 51.27273F));
@@ -362,7 +371,7 @@ namespace BlastWaveCSharp
             this.chart7.ChartAreas.Add(chartArea7);
             legend7.Name = "Legend1";
             this.chart7.Legends.Add(legend7);
-            this.chart7.Location = new System.Drawing.Point(882, 127);
+            this.chart7.Location = new System.Drawing.Point(882, 157);
             this.chart7.Name = "chart7";
             this.chart7.Size = new System.Drawing.Size(448, 120);
             this.chart7.TabIndex = 44;
@@ -395,7 +404,7 @@ namespace BlastWaveCSharp
             // label22
             // 
             this.label22.AutoSize = true;
-            this.label22.Location = new System.Drawing.Point(25, 101);
+            this.label22.Location = new System.Drawing.Point(25, 96);
             this.label22.Name = "label22";
             this.label22.Size = new System.Drawing.Size(0, 13);
             this.label22.TabIndex = 52;
@@ -410,14 +419,110 @@ namespace BlastWaveCSharp
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.DataDirectoryToolStripMenuItem_Click);
             // 
+            // label23
+            // 
+            this.label23.AutoSize = true;
+            this.label23.Location = new System.Drawing.Point(25, 113);
+            this.label23.Name = "label23";
+            this.label23.Size = new System.Drawing.Size(471, 13);
+            this.label23.TabIndex = 54;
+            this.label23.Text = "Signature Files: 0 | Delay Files: 0 | Sample Rate: 0 sps | Note: Sample Rate betwe" +
+    "en signature wave must be the same.";
+            // 
+            // label24
+            // 
+            this.label24.AutoSize = true;
+            this.label24.Location = new System.Drawing.Point(0, 0);
+            this.label24.Margin = new System.Windows.Forms.Padding(0, 0, 2, 0);
+            this.label24.Name = "label24";
+            this.label24.Size = new System.Drawing.Size(64, 13);
+            this.label24.TabIndex = 55;
+            this.label24.Text = "Created by:";
+            // 
+            // linkLabelAuthor
+            // 
+            this.linkLabelAuthor.AutoSize = true;
+            this.linkLabelAuthor.Location = new System.Drawing.Point(66, 0);
+            this.linkLabelAuthor.Margin = new System.Windows.Forms.Padding(0, 0, 2, 0);
+            this.linkLabelAuthor.Name = "linkLabelAuthor";
+            this.linkLabelAuthor.Size = new System.Drawing.Size(77, 13);
+            this.linkLabelAuthor.TabIndex = 56;
+            this.linkLabelAuthor.TabStop = true;
+            this.linkLabelAuthor.Text = "Harristio Adam";
+            this.linkLabelAuthor.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.LinkLabelAuthor_LinkClicked);
+            // 
+            // label25
+            // 
+            this.label25.AutoSize = true;
+            this.label25.Location = new System.Drawing.Point(145, 0);
+            this.label25.Margin = new System.Windows.Forms.Padding(0, 0, 2, 0);
+            this.label25.Name = "label25";
+            this.label25.Size = new System.Drawing.Size(72, 13);
+            this.label25.TabIndex = 57;
+            this.label25.Text = "| Supervised by:";
+            // 
+            // linkLabelSupervisor
+            // 
+            this.linkLabelSupervisor.AutoSize = true;
+            this.linkLabelSupervisor.Location = new System.Drawing.Point(219, 0);
+            this.linkLabelSupervisor.Margin = new System.Windows.Forms.Padding(0, 0, 2, 0);
+            this.linkLabelSupervisor.Name = "linkLabelSupervisor";
+            this.linkLabelSupervisor.Size = new System.Drawing.Size(270, 13);
+            this.linkLabelSupervisor.TabIndex = 58;
+            this.linkLabelSupervisor.TabStop = true;
+            this.linkLabelSupervisor.Text = "Prof. Dr.Eng. Ir. Ganda Marihot Simangunsong, S.T., M.T.";
+            this.linkLabelSupervisor.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.LinkLabelSupervisor_LinkClicked);
+            // 
+            // label26
+            // 
+            this.label26.AutoSize = true;
+            this.label26.Location = new System.Drawing.Point(491, 0);
+            this.label26.Margin = new System.Windows.Forms.Padding(0, 0, 2, 0);
+            this.label26.Name = "label26";
+            this.label26.Size = new System.Drawing.Size(67, 13);
+            this.label26.TabIndex = 59;
+            this.label26.Text = "| Github :";
+            // 
+            // linkLabelGithub
+            // 
+            this.linkLabelGithub.AutoSize = true;
+            this.linkLabelGithub.Location = new System.Drawing.Point(560, 0);
+            this.linkLabelGithub.Margin = new System.Windows.Forms.Padding(0);
+            this.linkLabelGithub.Name = "linkLabelGithub";
+            this.linkLabelGithub.Size = new System.Drawing.Size(171, 13);
+            this.linkLabelGithub.TabIndex = 60;
+            this.linkLabelGithub.TabStop = true;
+            this.linkLabelGithub.Text = "github.com/harris61/blastwave-csharp";
+            this.linkLabelGithub.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.LinkLabelGithub_LinkClicked);
+            // 
+            // flowLayoutPanel2
+            // 
+            this.flowLayoutPanel2.AutoSize = true;
+            this.flowLayoutPanel2.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.flowLayoutPanel2.Controls.Add(this.label24);
+            this.flowLayoutPanel2.Controls.Add(this.linkLabelAuthor);
+            this.flowLayoutPanel2.Controls.Add(this.label25);
+            this.flowLayoutPanel2.Controls.Add(this.linkLabelSupervisor);
+            this.flowLayoutPanel2.Controls.Add(this.label26);
+            this.flowLayoutPanel2.Controls.Add(this.linkLabelGithub);
+            this.flowLayoutPanel2.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
+            this.flowLayoutPanel2.Location = new System.Drawing.Point(25, 130);
+            this.flowLayoutPanel2.Margin = new System.Windows.Forms.Padding(0);
+            this.flowLayoutPanel2.Name = "flowLayoutPanel2";
+            this.flowLayoutPanel2.Size = new System.Drawing.Size(731, 13);
+            this.flowLayoutPanel2.TabIndex = 61;
+            this.flowLayoutPanel2.WrapContents = false;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.ClientSize = new System.Drawing.Size(1334, 541);
-            this.Controls.Add(this.label22);
+            this.Controls.Add(this.flowLayoutPanel2);
+            this.Controls.Add(this.label23);
             this.Controls.Add(this.button2);
+            this.Controls.Add(this.label22);
             this.Controls.Add(this.label21);
             this.Controls.Add(this.label20);
             this.Controls.Add(this.label16);
@@ -455,6 +560,8 @@ namespace BlastWaveCSharp
             ((System.ComponentModel.ISupportInitialize)(this.chart5)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.chart7)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.form1BindingSource)).EndInit();
+            this.flowLayoutPanel2.ResumeLayout(false);
+            this.flowLayoutPanel2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -494,6 +601,14 @@ namespace BlastWaveCSharp
         private System.Windows.Forms.Label label21;
         private System.Windows.Forms.Label label22;
         private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Label label23;
+        private System.Windows.Forms.Label label24;
+        private System.Windows.Forms.LinkLabel linkLabelAuthor;
+        private System.Windows.Forms.Label label25;
+        private System.Windows.Forms.LinkLabel linkLabelSupervisor;
+        private System.Windows.Forms.Label label26;
+        private System.Windows.Forms.LinkLabel linkLabelGithub;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel2;
     }
 }
 
