@@ -51,9 +51,39 @@ Result files are written to the selected input folder:
 - `result_PVS.txt`
 
 ## Build & Publish
+Default publish output is `artifacts\` (set in `BlastWaveCSharp.csproj`).
+
 Publish ke folder `artifacts\`:
 ```powershell
 .\publish.ps1
+```
+
+Portable note:
+The default publish produces a self-contained, single-file `win-x64` exe, so you can usually copy just `artifacts\Blast Wave PPV Optimizer.exe` to another 64-bit Windows PC and run it.
+
+Override output folder:
+```powershell
+.\publish.ps1 -OutDir dist
+```
+
+Self-contained (default on):
+```powershell
+.\publish.ps1 -SelfContained
+```
+
+Single-file (default on, with or without self-contained):
+```powershell
+.\publish.ps1 -SingleFile
+```
+
+Disable defaults:
+```powershell
+.\publish.ps1 -SelfContained:$false -SingleFile:$false
+```
+
+Or via `dotnet publish`:
+```powershell
+dotnet publish -c Release -r win-x64
 ```
 
 ## Project Structure (core)

@@ -74,6 +74,7 @@ namespace BlastWaveCSharp
             this.label20 = new System.Windows.Forms.Label();
             this.form1BindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.label21 = new System.Windows.Forms.Label();
+            this.label27 = new System.Windows.Forms.Label();
             this.label22 = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
             this.label23 = new System.Windows.Forms.Label();
@@ -401,6 +402,15 @@ namespace BlastWaveCSharp
             this.label21.TabIndex = 50;
             this.label21.Text = "Full Blast Duration (ms)";
             // 
+            // label27
+            // 
+            this.label27.AutoSize = true;
+            this.label27.Location = new System.Drawing.Point(25, 55);
+            this.label27.Name = "label27";
+            this.label27.Size = new System.Drawing.Size(74, 13);
+            this.label27.TabIndex = 62;
+            this.label27.Text = "Input Directory";
+            // 
             // label22
             // 
             this.label22.AutoSize = true;
@@ -523,6 +533,7 @@ namespace BlastWaveCSharp
             this.Controls.Add(this.label23);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.label22);
+            this.Controls.Add(this.label27);
             this.Controls.Add(this.label21);
             this.Controls.Add(this.label20);
             this.Controls.Add(this.label16);
@@ -600,6 +611,7 @@ namespace BlastWaveCSharp
         private System.Windows.Forms.DataVisualization.Charting.Chart chart7;
         private System.Windows.Forms.Label label20;
         private System.Windows.Forms.Label label21;
+        private System.Windows.Forms.Label label27;
         private System.Windows.Forms.Label label22;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Label label23;

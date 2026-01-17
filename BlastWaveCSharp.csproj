@@ -9,6 +9,7 @@
     <ApplicationIcon>sound__3__zx3_icon.ico</ApplicationIcon>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <PublishDir>artifacts\</PublishDir>
   </PropertyGroup>
 
   <ItemGroup>
