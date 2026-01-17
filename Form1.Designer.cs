@@ -44,15 +44,11 @@ namespace BlastWaveCSharp
             System.Windows.Forms.DataVisualization.Charting.Legend legend6 = new System.Windows.Forms.DataVisualization.Charting.Legend();
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea7 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
             System.Windows.Forms.DataVisualization.Charting.Legend legend7 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            this.textBox1 = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
-            this.textBox2 = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
-            this.label5 = new System.Windows.Forms.Label();
-            this.label6 = new System.Windows.Forms.Label();
             this.textBox3 = new System.Windows.Forms.TextBox();
             this.textBox4 = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
@@ -67,7 +63,6 @@ namespace BlastWaveCSharp
             this.label16 = new System.Windows.Forms.Label();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.textBox7 = new System.Windows.Forms.TextBox();
-            this.label19 = new System.Windows.Forms.Label();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.chart6 = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.chart1 = new System.Windows.Forms.DataVisualization.Charting.Chart();
@@ -80,8 +75,9 @@ namespace BlastWaveCSharp
             this.label17 = new System.Windows.Forms.Label();
             this.label20 = new System.Windows.Forms.Label();
             this.form1BindingSource = new System.Windows.Forms.BindingSource(this.components);
-            this.textBox5 = new System.Windows.Forms.TextBox();
             this.label21 = new System.Windows.Forms.Label();
+            this.label22 = new System.Windows.Forms.Label();
+            this.button2 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.chart6)).BeginInit();
@@ -93,14 +89,6 @@ namespace BlastWaveCSharp
             ((System.ComponentModel.ISupportInitialize)(this.chart7)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.form1BindingSource)).BeginInit();
             this.SuspendLayout();
-            // 
-            // textBox1
-            // 
-            this.textBox1.Location = new System.Drawing.Point(25, 74);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(136, 20);
-            this.textBox1.TabIndex = 0;
-            // 
             // label1
             // 
             this.label1.AutoSize = true;
@@ -119,13 +107,6 @@ namespace BlastWaveCSharp
             this.button1.Text = "Calculate";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.Button1_Click);
-            // 
-            // textBox2
-            // 
-            this.textBox2.Location = new System.Drawing.Point(200, 75);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(136, 20);
-            this.textBox2.TabIndex = 3;
             // 
             // label2
             // 
@@ -155,24 +136,6 @@ namespace BlastWaveCSharp
             this.label4.Size = new System.Drawing.Size(359, 31);
             this.label4.TabIndex = 14;
             this.label4.Text = "Blast Wave PPV Optimizer";
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(25, 57);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(139, 13);
-            this.label5.TabIndex = 15;
-            this.label5.Text = "Jumlah File Signature Wave";
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(200, 57);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(134, 13);
-            this.label6.TabIndex = 16;
-            this.label6.Text = "Jumlah File Skenario Delay";
             // 
             // textBox3
             // 
@@ -286,15 +249,6 @@ namespace BlastWaveCSharp
             this.textBox7.Name = "textBox7";
             this.textBox7.Size = new System.Drawing.Size(136, 20);
             this.textBox7.TabIndex = 35;
-            // 
-            // label19
-            // 
-            this.label19.AutoSize = true;
-            this.label19.Location = new System.Drawing.Point(725, 57);
-            this.label19.Name = "label19";
-            this.label19.Size = new System.Drawing.Size(98, 13);
-            this.label19.TabIndex = 36;
-            this.label19.Text = "Sampling Rate(sps)";
             // 
             // tableLayoutPanel1
             // 
@@ -453,13 +407,6 @@ namespace BlastWaveCSharp
             // 
             this.form1BindingSource.DataSource = typeof(BlastWaveCSharp.Form1);
             // 
-            // textBox5
-            // 
-            this.textBox5.Location = new System.Drawing.Point(728, 74);
-            this.textBox5.Name = "textBox5";
-            this.textBox5.Size = new System.Drawing.Size(136, 20);
-            this.textBox5.TabIndex = 49;
-            // 
             // label21
             // 
             this.label21.AutoSize = true;
@@ -469,18 +416,36 @@ namespace BlastWaveCSharp
             this.label21.TabIndex = 50;
             this.label21.Text = "Lama Pengukuran(ms)";
             // 
+            // label22
+            // 
+            this.label22.AutoSize = true;
+            this.label22.Location = new System.Drawing.Point(25, 44);
+            this.label22.Name = "label22";
+            this.label22.Size = new System.Drawing.Size(0, 13);
+            this.label22.TabIndex = 52;
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(25, 74);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(136, 23);
+            this.button2.TabIndex = 53;
+            this.button2.Text = "Data Directory...";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.DataDirectoryToolStripMenuItem_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.ClientSize = new System.Drawing.Size(1334, 541);
+            this.Controls.Add(this.label22);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.label21);
-            this.Controls.Add(this.textBox5);
             this.Controls.Add(this.label20);
             this.Controls.Add(this.label16);
             this.Controls.Add(this.chart7);
-            this.Controls.Add(this.label19);
             this.Controls.Add(this.textBox7);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.label15);
@@ -494,15 +459,11 @@ namespace BlastWaveCSharp
             this.Controls.Add(this.label7);
             this.Controls.Add(this.textBox4);
             this.Controls.Add(this.textBox3);
-            this.Controls.Add(this.label6);
-            this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
-            this.Controls.Add(this.textBox2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.textBox1);
             this.Controls.Add(this.tableLayoutPanel1);
             this.Controls.Add(this.label17);
             this.Controls.Add(this.label18);
@@ -527,15 +488,11 @@ namespace BlastWaveCSharp
 
         #endregion
 
-        private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.TextBox textBox2;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox textBox3;
         private System.Windows.Forms.TextBox textBox4;
         private System.Windows.Forms.Label label7;
@@ -551,7 +508,6 @@ namespace BlastWaveCSharp
         private System.Windows.Forms.BindingSource form1BindingSource;
         private System.Windows.Forms.DataGridView dataGridView1;
         private System.Windows.Forms.TextBox textBox7;
-        private System.Windows.Forms.Label label19;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.DataVisualization.Charting.Chart chart1;
         private System.Windows.Forms.DataVisualization.Charting.Chart chart2;
@@ -563,8 +519,9 @@ namespace BlastWaveCSharp
         private System.Windows.Forms.Label label18;
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.Label label20;
-        private System.Windows.Forms.TextBox textBox5;
         private System.Windows.Forms.Label label21;
+        private System.Windows.Forms.Label label22;
+        private System.Windows.Forms.Button button2;
     }
 }
 

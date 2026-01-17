@@ -12,11 +12,13 @@ namespace BlastWaveCSharp
     public partial class Form1 : Form
     {
         private const int DefaultSps = 1024;
+        private string _dataDirectory = string.Empty;
 
         public Form1()
         {
             InitializeComponent();
-
+            _dataDirectory = GetDefaultDir();
+            UpdateDirectoryLabel();
         }
 
         private void Button1_Click(object sender, EventArgs e)
@@ -32,24 +34,34 @@ namespace BlastWaveCSharp
                     return;
                 }
 
-                string defaultDir = GetDefaultDir();
-                if (!Directory.Exists(defaultDir))
+                string dataDir = _dataDirectory;
+                if (!Directory.Exists(dataDir))
                 {
-                    ShowError($"Folder not found: {defaultDir}");
+                    ShowError($"Folder not found: {dataDir}");
                     return;
                 }
 
-                if (inputs.SamplingRate % DefaultSps != 0)
+                FileInfo[] signatureFiles = GetNumericFiles(new DirectoryInfo(Path.Combine(dataDir, "Signature Wave")));
+                if (signatureFiles.Length == 0)
+                {
+                    ShowError("Signature Wave folder kosong.");
+                    return;
+                }
+
+                int samplingRate = GetSamplingRate(signatureFiles[0]);
+                if (samplingRate % DefaultSps != 0)
                 {
                     ShowError($"Sampling rate must be divisible by {DefaultSps}.");
                     return;
                 }
 
-                int ratioSps = inputs.SamplingRate / DefaultSps;
-                SignatureWaveData signature = LoadSignatureWave(defaultDir, inputs.SignatureFileCount, inputs.MeasurementMs, ratioSps);
-                DelayScenarioData delays = LoadDelayScenarios(defaultDir, inputs.DelayFileCount, ratioSps);
-                WeightData weights = LoadWeights(defaultDir, inputs.DelayFileCount);
-                DistanceData distances = LoadDistanceData(defaultDir, inputs.DelayFileCount);
+                int ratioSps = samplingRate / DefaultSps;
+                SignatureWaveData signature = LoadSignatureWave(signatureFiles, inputs.MeasurementMs, ratioSps, samplingRate);
+
+                FileInfo[] delayFiles = GetNumericFiles(new DirectoryInfo(Path.Combine(dataDir, "Delay Scenario")));
+                DelayScenarioData delays = LoadDelayScenarios(delayFiles, ratioSps);
+                WeightData weights = LoadWeights(dataDir, delayFiles.Length);
+                DistanceData distances = LoadDistanceData(dataDir, delayFiles.Length);
 
                 ValidateScenarioAlignment(delays, weights, distances);
 
@@ -61,7 +73,7 @@ namespace BlastWaveCSharp
                     inputs.FieldConstant,
                     inputs.SignatureWeight);
 
-                UpdateUi(signature, result, inputs.SamplingRate);
+                UpdateUi(signature, result, samplingRate);
             }
             catch (Exception ex)
             {
@@ -83,18 +95,6 @@ namespace BlastWaveCSharp
         {
             inputs = new InputParams();
 
-            if (!int.TryParse(textBox1.Text, out int signatureFiles) || signatureFiles <= 0)
-            {
-                ShowError("Jumlah File Signature Wave harus angka > 0.");
-                return false;
-            }
-
-            if (!int.TryParse(textBox2.Text, out int delayFiles) || delayFiles <= 0)
-            {
-                ShowError("Jumlah File Skenario Delay harus angka > 0.");
-                return false;
-            }
-
             if (!double.TryParse(textBox3.Text, out double fieldConstant) || fieldConstant <= 0)
             {
                 ShowError("Konstanta Lapangan harus angka > 0.");
@@ -107,32 +107,20 @@ namespace BlastWaveCSharp
                 return false;
             }
 
-            if (!int.TryParse(textBox5.Text, out int samplingRate) || samplingRate <= 0)
-            {
-                ShowError("Sampling Rate harus angka > 0.");
-                return false;
-            }
-
             if (!int.TryParse(textBox7.Text, out int measurementMs) || measurementMs <= 0)
             {
                 ShowError("Lama Pengukuran harus angka > 0.");
                 return false;
             }
 
-            inputs.SignatureFileCount = signatureFiles;
-            inputs.DelayFileCount = delayFiles;
             inputs.FieldConstant = fieldConstant;
             inputs.SignatureWeight = signatureWeight;
-            inputs.SamplingRate = samplingRate;
             inputs.MeasurementMs = measurementMs;
             return true;
         }
 
-        private static SignatureWaveData LoadSignatureWave(string defaultDir, int fileCount, int measurementMs, int ratioSps)
+        private static SignatureWaveData LoadSignatureWave(FileInfo[] filesWave, int measurementMs, int ratioSps, int samplingRate)
         {
-            var dirWave = new DirectoryInfo(Path.Combine(defaultDir, "Signature Wave"));
-            FileInfo[] filesWave = GetNumericFiles(dirWave, fileCount);
-
             int startWave = 270 * ratioSps;
             int endWave = measurementMs * ratioSps;
             if (endWave <= startWave)
@@ -148,14 +136,26 @@ namespace BlastWaveCSharp
             foreach (FileInfo file in filesWave)
             {
                 string[] lines = File.ReadAllLines(file.FullName);
-                if (lines.Length <= endWave)
+                if (!TryGetSignatureMetadata(lines, out int fileSampleRate, out int dataStartIndex))
+                {
+                    throw new InvalidOperationException($"Header signature tidak valid: {file.Name}");
+                }
+
+                if (fileSampleRate != samplingRate)
+                {
+                    throw new InvalidOperationException($"Sampling rate tidak sama pada {file.Name}.");
+                }
+
+                int startIndex = dataStartIndex + startWave;
+                int endIndex = dataStartIndex + endWave;
+                if (lines.Length <= endIndex)
                 {
                     throw new InvalidOperationException($"File signature terlalu pendek: {file.Name}");
                 }
 
                 for (int i = 0; i < lengthWave; i++)
                 {
-                    string line = lines[startWave + i];
+                    string line = NormalizeLine(lines[startIndex + i]);
                     if (!TryParseWaveLine(line, out double tran, out double vert, out double lon))
                     {
                         throw new InvalidOperationException($"Format data signature tidak valid: {file.Name}");
@@ -173,9 +173,9 @@ namespace BlastWaveCSharp
 
             for (int i = 0; i < lengthWave; i++)
             {
-                tranWave[i] = sumTran[i] / fileCount;
-                vertWave[i] = sumVert[i] / fileCount;
-                longWave[i] = sumLong[i] / fileCount;
+                tranWave[i] = sumTran[i] / filesWave.Length;
+                vertWave[i] = sumVert[i] / filesWave.Length;
+                longWave[i] = sumLong[i] / filesWave.Length;
             }
 
             return new SignatureWaveData
@@ -187,15 +187,12 @@ namespace BlastWaveCSharp
             };
         }
 
-        private static DelayScenarioData LoadDelayScenarios(string defaultDir, int fileCount, int ratioSps)
+        private static DelayScenarioData LoadDelayScenarios(FileInfo[] filesDelay, int ratioSps)
         {
-            var dirDelay = new DirectoryInfo(Path.Combine(defaultDir, "Delay Scenario"));
-            FileInfo[] filesDelay = GetNumericFiles(dirDelay, fileCount);
-
-            int[][] delays = new int[fileCount][];
+            int[][] delays = new int[filesDelay.Length][];
             int maxDelay = 0;
 
-            for (int i = 0; i < fileCount; i++)
+            for (int i = 0; i < filesDelay.Length; i++)
             {
                 string[] lines = File.ReadAllLines(filesDelay[i].FullName);
                 if (lines.Length <= 1)
@@ -229,10 +226,84 @@ namespace BlastWaveCSharp
             };
         }
 
+        private static int GetSamplingRate(FileInfo signatureFile)
+        {
+            string[] lines = File.ReadAllLines(signatureFile.FullName);
+            if (!TryGetSignatureMetadata(lines, out int samplingRate, out _))
+            {
+                throw new InvalidOperationException($"Header signature tidak valid: {signatureFile.Name}");
+            }
+
+            return samplingRate;
+        }
+
+        private static bool TryGetSignatureMetadata(string[] lines, out int samplingRate, out int dataStartIndex)
+        {
+            samplingRate = 0;
+            dataStartIndex = -1;
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = NormalizeLine(lines[i]);
+                if (samplingRate == 0 && TryParseSampleRateLine(line, out int value))
+                {
+                    samplingRate = value;
+                }
+
+                if (dataStartIndex < 0 && TryParseWaveLine(line, out _, out _, out _))
+                {
+                    dataStartIndex = i;
+                }
+            }
+
+            return samplingRate > 0 && dataStartIndex >= 0;
+        }
+
+        private static bool TryParseSampleRateLine(string line, out int samplingRate)
+        {
+            samplingRate = 0;
+            line = NormalizeLine(line);
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return false;
+            }
+
+            string normalized = line.Replace(" ", string.Empty);
+            if (!normalized.StartsWith("SampleRate", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            int colonIndex = line.IndexOf(':');
+            string valuePart = colonIndex >= 0
+                ? line[(colonIndex + 1)..]
+                : line;
+
+            int firstDigit = valuePart.IndexOfAny("0123456789".ToCharArray());
+            if (firstDigit < 0)
+            {
+                return false;
+            }
+
+            valuePart = valuePart[firstDigit..].Trim();
+
+            string[] tokens = valuePart.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            if (tokens.Length == 0)
+            {
+                return false;
+            }
+
+            return int.TryParse(tokens[0], out samplingRate) && samplingRate > 0;
+        }
+
         private static WeightData LoadWeights(string defaultDir, int fileCount)
         {
             var dirWeight = new DirectoryInfo(Path.Combine(defaultDir, "Explosive Weight"));
-            FileInfo[] filesWeight = GetNumericFiles(dirWeight, fileCount);
+            FileInfo[] filesWeight = GetNumericFiles(dirWeight);
+            if (filesWeight.Length != fileCount)
+            {
+                throw new InvalidOperationException("Jumlah file weight tidak sama dengan jumlah skenario delay.");
+            }
 
             double[][] weights = new double[fileCount][];
             for (int i = 0; i < fileCount; i++)
@@ -490,7 +561,7 @@ namespace BlastWaveCSharp
             }
         }
 
-        private static FileInfo[] GetNumericFiles(DirectoryInfo dir, int expectedCount)
+        private static FileInfo[] GetNumericFiles(DirectoryInfo dir)
         {
             if (!dir.Exists)
             {
@@ -511,17 +582,18 @@ namespace BlastWaveCSharp
                 }
             }
 
-            if (map.Count < expectedCount)
+            if (map.Count == 0)
             {
-                throw new InvalidOperationException($"Jumlah file di {dir.Name} lebih sedikit dari input.");
+                throw new InvalidOperationException($"Folder {dir.Name} tidak memiliki file bernomor.");
             }
 
-            var ordered = new List<FileInfo>(expectedCount);
-            for (int i = 1; i <= expectedCount; i++)
+            int maxIndex = map.Keys.Max();
+            var ordered = new List<FileInfo>(maxIndex);
+            for (int i = 1; i <= maxIndex; i++)
             {
                 if (!map.TryGetValue(i, out FileInfo? file))
                 {
-                    throw new InvalidOperationException($"File di {dir.Name} harus bernomor mulai 1 sampai {expectedCount}.");
+                    throw new InvalidOperationException($"File di {dir.Name} harus bernomor mulai 1 sampai {maxIndex}.");
                 }
                 ordered.Add(file);
             }
@@ -535,6 +607,7 @@ namespace BlastWaveCSharp
             vert = 0;
             lon = 0;
 
+            line = NormalizeLine(line);
             string[] tokens = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
             if (tokens.Length < 3)
             {
@@ -600,11 +673,38 @@ namespace BlastWaveCSharp
             MessageBox.Show(this, message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
+        private void DataDirectoryToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var dialog = new FolderBrowserDialog
+            {
+                Description = "Select Blasting Data directory",
+                SelectedPath = _dataDirectory
+            };
+
+            if (dialog.ShowDialog(this) == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
+            {
+                _dataDirectory = dialog.SelectedPath;
+                UpdateDirectoryLabel();
+            }
+        }
+
+        private void UpdateDirectoryLabel()
+        {
+            label22.Text = $"Data Directory: {_dataDirectory}";
+        }
+
+        private static string NormalizeLine(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return string.Empty;
+            }
+
+            return line.Trim().Trim('"');
+        }
+
         private sealed class InputParams
         {
-            public int SignatureFileCount { get; set; }
-            public int DelayFileCount { get; set; }
-            public int SamplingRate { get; set; }
             public int MeasurementMs { get; set; }
             public double FieldConstant { get; set; }
             public double SignatureWeight { get; set; }
