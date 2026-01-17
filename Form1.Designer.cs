@@ -165,7 +165,7 @@ namespace BlastWaveCSharp
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(106, 13);
             this.label7.TabIndex = 19;
-            this.label7.Text = "Konstanta Lapangan";
+            this.label7.Text = "Field Constant (B)";
             // 
             // label8
             // 
@@ -174,7 +174,7 @@ namespace BlastWaveCSharp
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(134, 13);
             this.label8.TabIndex = 20;
-            this.label8.Text = "Muatan Signature Hole(kg)";
+            this.label8.Text = "Signature Hole Charge (kg)";
             // 
             // label9
             // 
@@ -399,7 +399,7 @@ namespace BlastWaveCSharp
             this.label21.Name = "label21";
             this.label21.Size = new System.Drawing.Size(113, 13);
             this.label21.TabIndex = 50;
-            this.label21.Text = "Lama Pengukuran(ms)";
+            this.label21.Text = "Full Blast Duration (ms)";
             // 
             // label22
             // 
@@ -424,10 +424,10 @@ namespace BlastWaveCSharp
             this.label23.AutoSize = true;
             this.label23.Location = new System.Drawing.Point(25, 113);
             this.label23.Name = "label23";
-            this.label23.Size = new System.Drawing.Size(471, 13);
+            this.label23.Size = new System.Drawing.Size(820, 13);
             this.label23.TabIndex = 54;
-            this.label23.Text = "Signature Files: 0 | Delay Files: 0 | Sample Rate: 0 sps | Note: Sample Rate betwe" +
-    "en signature wave must be the same.";
+            this.label23.Text = "Signature Files: 0 | Delay Files: 0 | Sample Rate: 0 sps | Note: Sample rate acros" +
+    "s signature waves must match. | USBM: v = K (D / sqrt(Qmax))^-b (Duvall & Petkof)";
             // 
             // label24
             // 
@@ -518,7 +518,7 @@ namespace BlastWaveCSharp
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.ClientSize = new System.Drawing.Size(1334, 541);
+            this.ClientSize = new System.Drawing.Size(1334, 600);
             this.Controls.Add(this.flowLayoutPanel2);
             this.Controls.Add(this.label23);
             this.Controls.Add(this.button2);
@@ -548,6 +548,7 @@ namespace BlastWaveCSharp
             this.Controls.Add(this.tableLayoutPanel1);
             this.DoubleBuffered = true;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MinimumSize = new System.Drawing.Size(1334, 600);
             this.Name = "Form1";
             this.Text = "Blast Wave PPV Optimizer";
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
