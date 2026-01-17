@@ -71,8 +71,6 @@ namespace BlastWaveCSharp
             this.chart4 = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.chart5 = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.chart7 = new System.Windows.Forms.DataVisualization.Charting.Chart();
-            this.label18 = new System.Windows.Forms.Label();
-            this.label17 = new System.Windows.Forms.Label();
             this.label20 = new System.Windows.Forms.Label();
             this.form1BindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.label21 = new System.Windows.Forms.Label();
@@ -100,7 +98,7 @@ namespace BlastWaveCSharp
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(1126, 74);
+            this.button1.Location = new System.Drawing.Point(769, 71);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 2;
@@ -121,7 +119,7 @@ namespace BlastWaveCSharp
             // 
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 48F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.Image = ((System.Drawing.Image)(resources.GetObject("label3.Image")));
-            this.label3.Location = new System.Drawing.Point(1207, -2);
+            this.label3.Location = new System.Drawing.Point(1167, -2);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(123, 111);
             this.label3.TabIndex = 13;
@@ -131,7 +129,7 @@ namespace BlastWaveCSharp
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(78, 12);
+            this.label4.Location = new System.Drawing.Point(120, 12);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(359, 31);
             this.label4.TabIndex = 14;
@@ -139,14 +137,14 @@ namespace BlastWaveCSharp
             // 
             // textBox3
             // 
-            this.textBox3.Location = new System.Drawing.Point(375, 75);
+            this.textBox3.Location = new System.Drawing.Point(211, 74);
             this.textBox3.Name = "textBox3";
             this.textBox3.Size = new System.Drawing.Size(136, 20);
             this.textBox3.TabIndex = 17;
             // 
             // textBox4
             // 
-            this.textBox4.Location = new System.Drawing.Point(550, 74);
+            this.textBox4.Location = new System.Drawing.Point(397, 74);
             this.textBox4.Name = "textBox4";
             this.textBox4.Size = new System.Drawing.Size(136, 20);
             this.textBox4.TabIndex = 18;
@@ -154,7 +152,7 @@ namespace BlastWaveCSharp
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(375, 57);
+            this.label7.Location = new System.Drawing.Point(211, 57);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(106, 13);
             this.label7.TabIndex = 19;
@@ -163,7 +161,7 @@ namespace BlastWaveCSharp
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(550, 57);
+            this.label8.Location = new System.Drawing.Point(397, 57);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(134, 13);
             this.label8.TabIndex = 20;
@@ -245,7 +243,7 @@ namespace BlastWaveCSharp
             // 
             // textBox7
             // 
-            this.textBox7.Location = new System.Drawing.Point(928, 77);
+            this.textBox7.Location = new System.Drawing.Point(583, 74);
             this.textBox7.Name = "textBox7";
             this.textBox7.Size = new System.Drawing.Size(136, 20);
             this.textBox7.TabIndex = 35;
@@ -263,7 +261,7 @@ namespace BlastWaveCSharp
             this.tableLayoutPanel1.Controls.Add(this.chart2, 0, 1);
             this.tableLayoutPanel1.Controls.Add(this.chart4, 1, 0);
             this.tableLayoutPanel1.Controls.Add(this.chart5, 1, 1);
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(3, 131);
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(3, 121);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 3;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 51.27273F));
@@ -364,40 +362,18 @@ namespace BlastWaveCSharp
             this.chart7.ChartAreas.Add(chartArea7);
             legend7.Name = "Legend1";
             this.chart7.Legends.Add(legend7);
-            this.chart7.Location = new System.Drawing.Point(882, 137);
+            this.chart7.Location = new System.Drawing.Point(882, 127);
             this.chart7.Name = "chart7";
             this.chart7.Size = new System.Drawing.Size(448, 120);
             this.chart7.TabIndex = 44;
             this.chart7.Text = "chart7";
-            // 
-            // label18
-            // 
-            this.label18.AutoSize = true;
-            this.label18.Font = new System.Drawing.Font("Microsoft Sans Serif", 72F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label18.Image = ((System.Drawing.Image)(resources.GetObject("label18.Image")));
-            this.label18.Location = new System.Drawing.Point(814, -2);
-            this.label18.Name = "label18";
-            this.label18.Size = new System.Drawing.Size(423, 108);
-            this.label18.TabIndex = 46;
-            this.label18.Text = "              ";
-            // 
-            // label17
-            // 
-            this.label17.AutoSize = true;
-            this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 72F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label17.Image = ((System.Drawing.Image)(resources.GetObject("label17.Image")));
-            this.label17.Location = new System.Drawing.Point(444, -2);
-            this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(504, 108);
-            this.label17.TabIndex = 47;
-            this.label17.Text = "                 ";
             // 
             // label20
             // 
             this.label20.AutoSize = true;
             this.label20.Font = new System.Drawing.Font("Microsoft Sans Serif", 24F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label20.Image = ((System.Drawing.Image)(resources.GetObject("label20.Image")));
-            this.label20.Location = new System.Drawing.Point(-11, 9);
+            this.label20.Location = new System.Drawing.Point(25, 9);
             this.label20.Name = "label20";
             this.label20.Size = new System.Drawing.Size(97, 37);
             this.label20.TabIndex = 48;
@@ -410,7 +386,7 @@ namespace BlastWaveCSharp
             // label21
             // 
             this.label21.AutoSize = true;
-            this.label21.Location = new System.Drawing.Point(925, 57);
+            this.label21.Location = new System.Drawing.Point(583, 57);
             this.label21.Name = "label21";
             this.label21.Size = new System.Drawing.Size(113, 13);
             this.label21.TabIndex = 50;
@@ -419,14 +395,14 @@ namespace BlastWaveCSharp
             // label22
             // 
             this.label22.AutoSize = true;
-            this.label22.Location = new System.Drawing.Point(25, 44);
+            this.label22.Location = new System.Drawing.Point(25, 101);
             this.label22.Name = "label22";
             this.label22.Size = new System.Drawing.Size(0, 13);
             this.label22.TabIndex = 52;
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(25, 74);
+            this.button2.Location = new System.Drawing.Point(25, 71);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(136, 23);
             this.button2.TabIndex = 53;
@@ -465,8 +441,6 @@ namespace BlastWaveCSharp
             this.Controls.Add(this.button1);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.tableLayoutPanel1);
-            this.Controls.Add(this.label17);
-            this.Controls.Add(this.label18);
             this.DoubleBuffered = true;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Form1";
@@ -516,8 +490,6 @@ namespace BlastWaveCSharp
         private System.Windows.Forms.DataVisualization.Charting.Chart chart5;
         private System.Windows.Forms.DataVisualization.Charting.Chart chart6;
         private System.Windows.Forms.DataVisualization.Charting.Chart chart7;
-        private System.Windows.Forms.Label label18;
-        private System.Windows.Forms.Label label17;
         private System.Windows.Forms.Label label20;
         private System.Windows.Forms.Label label21;
         private System.Windows.Forms.Label label22;
