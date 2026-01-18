@@ -561,7 +561,7 @@ namespace BlastWaveCSharp
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(1334, 600);
             this.Name = "Form1";
-            this.Text = "Blast Wave PPV Optimizer v1.0";
+            this.Text = "Blast Wave PPV Optimizer";
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.tableLayoutPanel1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.chart6)).EndInit();

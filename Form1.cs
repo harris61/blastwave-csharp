@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Reflection;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 
@@ -17,6 +18,7 @@ namespace BlastWaveCSharp
         public Form1()
         {
             InitializeComponent();
+            UpdateWindowTitle();
             _dataDirectory = GetDefaultDir();
             UpdateDirectoryLabel();
             UpdateMetaInfo(0, 0, 0);
@@ -290,6 +292,34 @@ namespace BlastWaveCSharp
             {
                 pair.Key.Top = pair.Value + delta;
             }
+        }
+
+        private void UpdateWindowTitle()
+        {
+            string productName = Application.ProductName ?? "Blast Wave PPV Optimizer";
+            string? version = GetAppVersion();
+            string title = string.IsNullOrWhiteSpace(version) ? productName : $"{productName} v{version}";
+            Text = title;
+            label4.Text = title;
+        }
+
+        private static string? GetAppVersion()
+        {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            string? version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+
+            if (string.IsNullOrWhiteSpace(version))
+            {
+                version = assembly.GetName().Version?.ToString();
+            }
+
+            if (string.IsNullOrWhiteSpace(version))
+            {
+                return null;
+            }
+
+            int metadataIndex = version.IndexOf('+');
+            return metadataIndex > 0 ? version.Substring(0, metadataIndex) : version;
         }
 
         private sealed class InputParams
