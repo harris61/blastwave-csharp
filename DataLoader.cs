@@ -9,7 +9,7 @@ namespace BlastWaveCSharp
     {
         public static SignatureWaveData LoadSignatureWave(FileInfo[] filesWave, int measurementMs, int ratioSps, int samplingRate)
         {
-            int startWave = 270 * ratioSps;
+            int startWave = 0;
             int endWave = measurementMs * ratioSps;
             if (endWave <= startWave)
             {
