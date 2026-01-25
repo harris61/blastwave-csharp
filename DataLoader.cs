@@ -7,19 +7,11 @@ namespace BlastWaveCSharp
 {
     internal static class DataLoader
     {
-        public static SignatureWaveData LoadSignatureWave(FileInfo[] filesWave, int measurementMs, int ratioSps, int samplingRate)
+        public static SignatureWaveData LoadSignatureWave(FileInfo[] filesWave, int samplingRate)
         {
-            int startWave = 0;
-            int endWave = measurementMs * ratioSps;
-            if (endWave <= startWave)
-            {
-                throw new InvalidOperationException("Measurement duration is too short for the signature window.");
-            }
-
-            int lengthWave = endWave - startWave;
-            double[] sumTran = new double[lengthWave];
-            double[] sumVert = new double[lengthWave];
-            double[] sumLong = new double[lengthWave];
+            // First pass: read all files and determine maximum data length
+            var fileDataList = new List<(string[] lines, int dataStartIndex, int dataLength)>();
+            int maxDataLength = 0;
 
             foreach (FileInfo file in filesWave)
             {
@@ -34,32 +26,48 @@ namespace BlastWaveCSharp
                     throw new InvalidOperationException($"Sampling rate mismatch in {file.Name}.");
                 }
 
-                int startIndex = dataStartIndex + startWave;
-                int endIndex = dataStartIndex + endWave;
-                if (lines.Length <= endIndex)
+                int dataLength = lines.Length - dataStartIndex;
+                if (dataLength <= 0)
                 {
-                    throw new InvalidOperationException($"Signature file is too short: {file.Name}");
+                    throw new InvalidOperationException($"Signature file has no data: {file.Name}");
                 }
 
-                for (int i = 0; i < lengthWave; i++)
+                fileDataList.Add((lines, dataStartIndex, dataLength));
+                if (dataLength > maxDataLength)
                 {
-                    string line = lines[startIndex + i];
+                    maxDataLength = dataLength;
+                }
+            }
+
+            // Second pass: extract data using max length, zero-padding shorter files
+            double[] sumTran = new double[maxDataLength];
+            double[] sumVert = new double[maxDataLength];
+            double[] sumLong = new double[maxDataLength];
+
+            for (int fileIndex = 0; fileIndex < fileDataList.Count; fileIndex++)
+            {
+                var (lines, dataStartIndex, dataLength) = fileDataList[fileIndex];
+
+                for (int i = 0; i < dataLength; i++)
+                {
+                    string line = lines[dataStartIndex + i];
                     if (!FileParsing.TryParseWaveLine(line, out double tran, out double vert, out double lon))
                     {
-                        throw new InvalidOperationException($"Invalid signature data format: {file.Name}");
+                        throw new InvalidOperationException($"Invalid signature data format: {filesWave[fileIndex].Name}");
                     }
 
                     sumTran[i] += tran;
                     sumVert[i] += vert;
                     sumLong[i] += lon;
                 }
+                // Samples beyond dataLength remain zero (zero-padding for shorter files)
             }
 
-            double[] tranWave = new double[lengthWave];
-            double[] vertWave = new double[lengthWave];
-            double[] longWave = new double[lengthWave];
+            double[] tranWave = new double[maxDataLength];
+            double[] vertWave = new double[maxDataLength];
+            double[] longWave = new double[maxDataLength];
 
-            for (int i = 0; i < lengthWave; i++)
+            for (int i = 0; i < maxDataLength; i++)
             {
                 tranWave[i] = sumTran[i] / filesWave.Length;
                 vertWave[i] = sumVert[i] / filesWave.Length;
@@ -71,7 +79,7 @@ namespace BlastWaveCSharp
                 Tran = tranWave,
                 Vert = vertWave,
                 Long = longWave,
-                Length = lengthWave
+                Length = maxDataLength
             };
         }
 

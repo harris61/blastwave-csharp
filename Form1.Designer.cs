@@ -62,7 +62,6 @@ namespace BlastWaveCSharp
             this.label15 = new System.Windows.Forms.Label();
             this.label16 = new System.Windows.Forms.Label();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            this.textBox7 = new System.Windows.Forms.TextBox();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.chart6 = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.chart1 = new System.Windows.Forms.DataVisualization.Charting.Chart();
@@ -73,7 +72,6 @@ namespace BlastWaveCSharp
             this.chart7 = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.label20 = new System.Windows.Forms.Label();
             this.form1BindingSource = new System.Windows.Forms.BindingSource(this.components);
-            this.label21 = new System.Windows.Forms.Label();
             this.label27 = new System.Windows.Forms.Label();
             this.label22 = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
@@ -84,6 +82,8 @@ namespace BlastWaveCSharp
             this.linkLabelSupervisor = new System.Windows.Forms.LinkLabel();
             this.label26 = new System.Windows.Forms.Label();
             this.linkLabelGithub = new System.Windows.Forms.LinkLabel();
+            this.label28 = new System.Windows.Forms.Label();
+            this.linkLabelGithubPython = new System.Windows.Forms.LinkLabel();
             this.flowLayoutPanel2 = new System.Windows.Forms.FlowLayoutPanel();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.tableLayoutPanel1.SuspendLayout();
@@ -108,7 +108,7 @@ namespace BlastWaveCSharp
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(769, 71);
+            this.button1.Location = new System.Drawing.Point(583, 71);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 2;
@@ -251,13 +251,6 @@ namespace BlastWaveCSharp
             this.dataGridView1.Size = new System.Drawing.Size(444, 257);
             this.dataGridView1.TabIndex = 30;
             // 
-            // textBox7
-            // 
-            this.textBox7.Location = new System.Drawing.Point(583, 74);
-            this.textBox7.Name = "textBox7";
-            this.textBox7.Size = new System.Drawing.Size(136, 20);
-            this.textBox7.TabIndex = 35;
-            // 
             // tableLayoutPanel1
             // 
             this.tableLayoutPanel1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
@@ -393,15 +386,6 @@ namespace BlastWaveCSharp
             // 
             this.form1BindingSource.DataSource = typeof(BlastWaveCSharp.Form1);
             // 
-            // label21
-            // 
-            this.label21.AutoSize = true;
-            this.label21.Location = new System.Drawing.Point(583, 57);
-            this.label21.Name = "label21";
-            this.label21.Size = new System.Drawing.Size(113, 13);
-            this.label21.TabIndex = 50;
-            this.label21.Text = "Full Blast Duration (ms)";
-            // 
             // label27
             // 
             this.label27.AutoSize = true;
@@ -491,20 +475,42 @@ namespace BlastWaveCSharp
             this.label26.Name = "label26";
             this.label26.Size = new System.Drawing.Size(67, 13);
             this.label26.TabIndex = 59;
-            this.label26.Text = "| Github :";
-            // 
+            this.label26.Text = "| Github:";
+            //
             // linkLabelGithub
-            // 
+            //
             this.linkLabelGithub.AutoSize = true;
             this.linkLabelGithub.Location = new System.Drawing.Point(560, 0);
-            this.linkLabelGithub.Margin = new System.Windows.Forms.Padding(0);
+            this.linkLabelGithub.Margin = new System.Windows.Forms.Padding(0, 0, 2, 0);
             this.linkLabelGithub.Name = "linkLabelGithub";
             this.linkLabelGithub.Size = new System.Drawing.Size(171, 13);
             this.linkLabelGithub.TabIndex = 60;
             this.linkLabelGithub.TabStop = true;
             this.linkLabelGithub.Text = "github.com/harris61/blastwave-csharp";
             this.linkLabelGithub.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.LinkLabelGithub_LinkClicked);
-            // 
+            //
+            // label28
+            //
+            this.label28.AutoSize = true;
+            this.label28.Location = new System.Drawing.Point(733, 0);
+            this.label28.Margin = new System.Windows.Forms.Padding(0, 0, 2, 0);
+            this.label28.Name = "label28";
+            this.label28.Size = new System.Drawing.Size(67, 13);
+            this.label28.TabIndex = 63;
+            this.label28.Text = "| Github (Online, Python version):";
+            //
+            // linkLabelGithubPython
+            //
+            this.linkLabelGithubPython.AutoSize = true;
+            this.linkLabelGithubPython.Location = new System.Drawing.Point(802, 0);
+            this.linkLabelGithubPython.Margin = new System.Windows.Forms.Padding(0);
+            this.linkLabelGithubPython.Name = "linkLabelGithubPython";
+            this.linkLabelGithubPython.Size = new System.Drawing.Size(260, 13);
+            this.linkLabelGithubPython.TabIndex = 64;
+            this.linkLabelGithubPython.TabStop = true;
+            this.linkLabelGithubPython.Text = "github.com/harris61/blastwave-python";
+            this.linkLabelGithubPython.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.LinkLabelGithubPython_LinkClicked);
+            //
             // flowLayoutPanel2
             // 
             this.flowLayoutPanel2.AutoSize = true;
@@ -515,6 +521,8 @@ namespace BlastWaveCSharp
             this.flowLayoutPanel2.Controls.Add(this.linkLabelSupervisor);
             this.flowLayoutPanel2.Controls.Add(this.label26);
             this.flowLayoutPanel2.Controls.Add(this.linkLabelGithub);
+            this.flowLayoutPanel2.Controls.Add(this.label28);
+            this.flowLayoutPanel2.Controls.Add(this.linkLabelGithubPython);
             this.flowLayoutPanel2.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
             this.flowLayoutPanel2.Location = new System.Drawing.Point(25, 130);
             this.flowLayoutPanel2.Margin = new System.Windows.Forms.Padding(0);
@@ -534,11 +542,9 @@ namespace BlastWaveCSharp
             this.Controls.Add(this.button2);
             this.Controls.Add(this.label22);
             this.Controls.Add(this.label27);
-            this.Controls.Add(this.label21);
             this.Controls.Add(this.label20);
             this.Controls.Add(this.label16);
             this.Controls.Add(this.chart7);
-            this.Controls.Add(this.textBox7);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.label15);
             this.Controls.Add(this.label14);
@@ -600,7 +606,6 @@ namespace BlastWaveCSharp
         private System.Windows.Forms.Label label16;
         private System.Windows.Forms.BindingSource form1BindingSource;
         private System.Windows.Forms.DataGridView dataGridView1;
-        private System.Windows.Forms.TextBox textBox7;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.DataVisualization.Charting.Chart chart1;
         private System.Windows.Forms.DataVisualization.Charting.Chart chart2;
@@ -610,7 +615,6 @@ namespace BlastWaveCSharp
         private System.Windows.Forms.DataVisualization.Charting.Chart chart6;
         private System.Windows.Forms.DataVisualization.Charting.Chart chart7;
         private System.Windows.Forms.Label label20;
-        private System.Windows.Forms.Label label21;
         private System.Windows.Forms.Label label27;
         private System.Windows.Forms.Label label22;
         private System.Windows.Forms.Button button2;
@@ -621,6 +625,8 @@ namespace BlastWaveCSharp
         private System.Windows.Forms.LinkLabel linkLabelSupervisor;
         private System.Windows.Forms.Label label26;
         private System.Windows.Forms.LinkLabel linkLabelGithub;
+        private System.Windows.Forms.Label label28;
+        private System.Windows.Forms.LinkLabel linkLabelGithubPython;
         private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel2;
     }
 }

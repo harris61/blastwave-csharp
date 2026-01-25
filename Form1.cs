@@ -61,7 +61,7 @@ namespace BlastWaveCSharp
                 }
 
                 int ratioSps = samplingRate / DefaultSps;
-                SignatureWaveData signature = DataLoader.LoadSignatureWave(signatureFiles, inputs.MeasurementMs, ratioSps, samplingRate);
+                SignatureWaveData signature = DataLoader.LoadSignatureWave(signatureFiles, samplingRate);
 
                 FileInfo[] delayFiles = DataLoader.GetNumericFiles(new DirectoryInfo(Path.Combine(dataDir, "Delay Scenario")));
                 UpdateMetaInfo(signatureFiles.Length, delayFiles.Length, samplingRate);
@@ -114,15 +114,8 @@ namespace BlastWaveCSharp
                 return false;
             }
 
-            if (!int.TryParse(textBox7.Text, out int measurementMs) || measurementMs <= 0)
-            {
-                ShowError("Measurement duration must be > 0.");
-                return false;
-            }
-
             inputs.FieldConstant = fieldConstant;
             inputs.SignatureWeight = signatureWeight;
-            inputs.MeasurementMs = measurementMs;
             return true;
         }
 
@@ -211,6 +204,11 @@ namespace BlastWaveCSharp
         private void LinkLabelGithub_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             OpenLink("https://github.com/harris61/blastwave-csharp");
+        }
+
+        private void LinkLabelGithubPython_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            OpenLink("https://github.com/harris61/blastwave-python");
         }
 
         private void OpenLink(string url)
@@ -324,7 +322,6 @@ namespace BlastWaveCSharp
 
         private sealed class InputParams
         {
-            public int MeasurementMs { get; set; }
             public double FieldConstant { get; set; }
             public double SignatureWeight { get; set; }
         }
